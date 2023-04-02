@@ -1,2 +1,3 @@
 # VideoAssist
- Android App with JetpackComcose which will allow you to manage the shot footages for the perfect cut.
+ Android App with JetpackComcose.
+ When you're filming B-roll while on vacation, it's hard to remember what footage you've filmed. When you edit your clip on cold long evenings, you often come across a situation where it is difficult to connect two footage to each other. To avoid this, you can use a notepad with a pen during shooting or this mobile application, which will allow you to manage the shot footages for the perfect cut.
