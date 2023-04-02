@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Video Assist</string>
+    <string name="welcomeScreenImage">welcome screen image</string>
+    <string name="greetings">Hey!</string>
+    <string name="greetingsBody">Let"'"s start filming a new video</string>
+    <string name="menuIcon">Hamburger Icon</string>
+    <string name="addIcon">Add Icon</string>
+    <string name="name">Name</string>
+    <string name="description">Description</string>
+    <string name="selectEquipment">Select an equipment</string>
+    <string name="save">SAVE</string>
+    <string name="createClip">Create a new clip</string>
+</resources>
