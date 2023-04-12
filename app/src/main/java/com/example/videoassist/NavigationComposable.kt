@@ -8,15 +8,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 
 @Composable
-fun Navigation (navController: NavHostController, databaseClips: List<ClipItemRoom>) {
+fun Navigation (navController: NavHostController, databaseClips: List<ClipItemRoom>, databaseEquipment: List<EquipmentRoom>, database: AppDatabase) {
     NavHost(
         navController = navController,
         startDestination = HomeScreen.route){
         composable(HomeScreen.route){
-            HomeScreen(navController = navController, databaseClips = databaseClips)
+            HomeScreen(navController = navController,  databaseClips = databaseClips)
         }
         composable(NewClip.route){
-            NewClip(navController = navController)
+            NewClip(navController = navController,  databaseClips = databaseClips, databaseEquipment=databaseEquipment, database=database)
         }
         composable(ClipScreen.route){
             ClipScreen(navController = navController)

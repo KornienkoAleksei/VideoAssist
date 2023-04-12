@@ -1,0 +1,90 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "27d25b227aedc2d73913c2e4238370b9",
+    "entities": [
+      {
+        "tableName": "ClipItemRoom",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`idClip` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `creationDate` TEXT NOT NULL, `clipName` TEXT NOT NULL, `clipDescription` TEXT NOT NULL, `equipmentMap` TEXT NOT NULL, `footage` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "idClip",
+            "columnName": "idClip",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "creationDate",
+            "columnName": "creationDate",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "clipName",
+            "columnName": "clipName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "clipDescription",
+            "columnName": "clipDescription",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "equipmentMap",
+            "columnName": "equipmentMap",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "footage",
+            "columnName": "footage",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "idClip"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "EquipmentRoom",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`idEquipment` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nameEquipment` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "idEquipment",
+            "columnName": "idEquipment",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nameEquipment",
+            "columnName": "nameEquipment",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "idEquipment"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '27d25b227aedc2d73913c2e4238370b9')"
+    ]
+  }
+}

@@ -15,17 +15,21 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
 import com.example.videoassist.ui.theme.DarkGray
 import com.example.videoassist.ui.theme.VideoAssistTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     //instance for Room database
     private val database by lazy {
         Room.databaseBuilder(applicationContext, AppDatabase::class.java, "database").build()
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         //set soft screen: change resolution when keyboard appear
@@ -37,15 +41,17 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+
                     //load database
                     val databaseClips by database.databaseDao().getAllClip().observeAsState(emptyList())
                     val databaseEquipment by database.databaseDao().getAllEquipment().observeAsState(emptyList())
 
 
                     val navController = rememberNavController()
-                    Navigation(navController, databaseClips)
+                    Navigation(navController, databaseClips = databaseClips, databaseEquipment=databaseEquipment, database= database)
                 }
             }
         }
     }
 }
+

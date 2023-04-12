@@ -9,6 +9,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,7 +27,7 @@ fun HomeScreen(
     navController: NavController,
     databaseClips: List<ClipItemRoom>
 ){
-if (databaseClips.isEmpty()){
+    if (databaseClips.isEmpty()){
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.welcomescreenimage),

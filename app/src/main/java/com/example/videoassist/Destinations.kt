@@ -19,3 +19,4 @@ object ClipScreen : Destinations{
 object NewFootage : Destinations{
     override val route = "NewFootage"
 }
+
