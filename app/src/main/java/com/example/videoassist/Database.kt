@@ -76,7 +76,7 @@ interface DatabaseDao {
     fun getAllEquipment() : LiveData<List<EquipmentRoom>>
 
     @Insert
-    fun insertClip(vararg clip: ClipItemRoom)
+    suspend fun insertClip(vararg clip: ClipItemRoom)
 
     @Insert
     suspend fun insertEquipment(vararg equipment: EquipmentRoom)

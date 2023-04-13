@@ -16,7 +16,7 @@ fun Navigation (navController: NavHostController, databaseClips: List<ClipItemRo
             HomeScreen(navController = navController,  databaseClips = databaseClips)
         }
         composable(NewClip.route){
-            NewClip(navController = navController,  databaseClips = databaseClips, databaseEquipment=databaseEquipment, database=database)
+            NewClip(navController = navController, databaseEquipment=databaseEquipment, database=database)
         }
         composable(ClipScreen.route){
             ClipScreen(navController = navController)
