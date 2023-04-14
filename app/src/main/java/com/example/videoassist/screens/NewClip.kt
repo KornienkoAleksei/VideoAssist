@@ -194,6 +194,7 @@ fun NewClip(
             }
 
         }
+        //button save
         Button(
             onClick = {
                 focusManager.clearFocus()
@@ -221,7 +222,7 @@ fun NewClip(
                     coroutineScope.launch {
                         database.databaseDao().insertClip(newClip)
                     }
-                    navController.navigate(HomeScreen.route)
+                    navController.navigateUp()
                 }
             },
             shape = RoundedCornerShape(26.dp),

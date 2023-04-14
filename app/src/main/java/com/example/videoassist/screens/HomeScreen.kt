@@ -4,10 +4,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-//import androidx.compose.foundation.lazy.grid.GridCells
-//import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
-//import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-//import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,8 +12,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-//import androidx.compose.runtime.getValue
-//import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -79,7 +73,7 @@ fun HomeScreen(
             item { Header() }
             if (databaseClips.isNotEmpty()){
                 items(databaseClips.size) {
-                    ClipList(clipItemRoom = databaseClips[databaseClips.size - 1 - it]);
+                    ClipList(clipItemRoom = databaseClips[databaseClips.size - 1 - it], navController = navController);
                 }
             }
         }
@@ -135,9 +129,10 @@ fun Header(modifier: Modifier = Modifier) {
 @Composable
 fun ClipList (
     clipItemRoom: ClipItemRoom,
+    navController: NavController,
     modifier: Modifier = Modifier
 ){
-    Surface(onClick = { /*TODO*/ },
+    Surface(onClick = { navController.navigate("ClipScreen/${clipItemRoom.idClip}") },
         shape = RoundedCornerShape(16.dp),
         color = LightGray,
         contentColor = Color.White,

@@ -72,6 +72,9 @@ interface DatabaseDao {
     @Query("SELECT * FROM ClipItemRoom")
     fun getAllClip() : LiveData<List<ClipItemRoom>>
 
+    @Query("SELECT * FROM ClipItemRoom WHERE idClip = :idClip")
+    fun getClip(vararg idClip: Int) : LiveData<ClipItemRoom>
+
     @Query("SELECT * FROM EquipmentRoom")
     fun getAllEquipment() : LiveData<List<EquipmentRoom>>
 
