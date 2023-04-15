@@ -45,6 +45,15 @@ fun NewFootage(
     var cameraMovementVertical by remember { mutableStateOf(CameraMovementVertical.Static) }
     var cameraMovementHorizontal by remember { mutableStateOf(CameraMovementHorizontal.Static) }
     var personOrientation by remember { mutableStateOf(PersonOrientation.StaticForward) }
+    val staticPersonOrientation =
+            when (personOrientation) { PersonOrientation.StaticRight -> true
+                PersonOrientation.StaticLeft -> true
+                PersonOrientation.StaticForward -> true
+                PersonOrientation.StaticBackward -> true
+                PersonOrientation.MoveForward -> false
+                PersonOrientation.MoveBackward -> false
+                PersonOrientation.MoveLeft -> false
+                PersonOrientation.MoveRight -> false}
     currentClip?.let {
         number += currentClip!!.footage.size
     }
@@ -63,8 +72,13 @@ fun NewFootage(
                 .padding(top = 16.dp)
         ) {
             FootageHeader(number = number, navController = navController)
-            FootageToggleButton(person = person, onClickPerson = {person = true}, onClickObject = {person = false})
-            Row(modifier = Modifier.padding(start = 16.dp, bottom = 32.dp)) {
+            FootageToggleButton(person = person, onClickPerson = {person = true}, onClickObject = {
+                person = false
+                if (frame == Frame.FullBody || frame == Frame.Face) {
+                    frame = Frame.Body
+                }
+            })
+            Row(modifier = Modifier.padding(start = 4.dp, bottom = 32.dp)) {
                 FrameIconButton(
                     currentFrame = frame,
                     buttonFrame = Frame.Landscape,
@@ -132,7 +146,8 @@ fun NewFootage(
                         })
                 }
                 //camera movement horizontal
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(horizontal = 8.dp)) {
                     SpiderCameraButtonHorizontal(
                         cameraMovementHorizontal = cameraMovementHorizontal,
                         cameraMovementHorizontalButton = CameraMovementHorizontal.Left,
@@ -224,13 +239,67 @@ fun NewFootage(
                 }
                 //object movement
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    SpiderPersonOrientationButton(
+                        personOrientation = personOrientation,
+                        personOrientationButton = PersonOrientation.StaticLeft,
+                        staticPersonOrientation = staticPersonOrientation,
+                        onClick = {
+                            personOrientation = when (personOrientation) {
+                                PersonOrientation.StaticLeft -> PersonOrientation.MoveLeft
+                                PersonOrientation.MoveLeft -> PersonOrientation.StaticLeft
+                                else -> if (staticPersonOrientation) PersonOrientation.StaticLeft else PersonOrientation.MoveLeft
 
-                    FrameIconButton(
-                        currentFrame = frame,
-                        buttonFrame = frame,
-                        person = person,
-                        iconSize = 32,
-                        onClick = { /*To DO*/})
+                            }
+                        })
+                    Row(verticalAlignment = Alignment.CenterVertically ) {
+                        SpiderPersonOrientationButton(
+                            personOrientation = personOrientation,
+                            personOrientationButton = PersonOrientation.StaticForward,
+                            staticPersonOrientation = staticPersonOrientation,
+                            onClick = {
+                                personOrientation = when (personOrientation) {
+                                    PersonOrientation.StaticForward -> PersonOrientation.MoveForward
+                                    PersonOrientation.MoveForward -> PersonOrientation.StaticForward
+                                    else -> if (staticPersonOrientation) PersonOrientation.StaticForward else PersonOrientation.MoveForward }
+                            })
+                        FrameIconButton(
+                            currentFrame = frame,
+                            buttonFrame = frame,
+                            person = person,
+                            iconSize = 32,
+                            onClick = {
+                                personOrientation = when (personOrientation) {
+                                    PersonOrientation.MoveBackward -> PersonOrientation.StaticBackward
+                                    PersonOrientation.MoveForward -> PersonOrientation.StaticForward
+                                    PersonOrientation.MoveLeft -> PersonOrientation.StaticLeft
+                                    PersonOrientation.MoveRight -> PersonOrientation.StaticRight
+                                    PersonOrientation.StaticBackward -> PersonOrientation.MoveBackward
+                                    PersonOrientation.StaticForward -> PersonOrientation.MoveForward
+                                    PersonOrientation.StaticLeft -> PersonOrientation.MoveLeft
+                                    PersonOrientation.StaticRight -> PersonOrientation.MoveRight}
+                            })
+                        SpiderPersonOrientationButton(
+                            personOrientation = personOrientation,
+                            personOrientationButton = PersonOrientation.StaticBackward,
+                            staticPersonOrientation = staticPersonOrientation,
+                            onClick = {
+                                personOrientation = when (personOrientation) {
+                                    PersonOrientation.StaticBackward -> PersonOrientation.MoveBackward
+                                    PersonOrientation.MoveBackward -> PersonOrientation.StaticBackward
+                                    else -> if (staticPersonOrientation) PersonOrientation.StaticBackward else PersonOrientation.MoveBackward}
+                            })
+                    }
+
+                    SpiderPersonOrientationButton(
+                        personOrientation = personOrientation,
+                        personOrientationButton = PersonOrientation.StaticRight,
+                        staticPersonOrientation = staticPersonOrientation,
+                        onClick = {
+                            personOrientation = when (personOrientation) {
+                                PersonOrientation.StaticRight -> PersonOrientation.MoveRight
+                                PersonOrientation.MoveRight -> PersonOrientation.StaticRight
+                                else -> if (staticPersonOrientation) PersonOrientation.StaticRight else PersonOrientation.MoveRight}
+                        })
 
                 }
             }
@@ -285,7 +354,8 @@ fun FootageToggleButton(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(horizontal = 16.dp)
+            .padding(top = 16.dp, bottom = 4.dp)
             .height(40.dp)
     ) {
         OutlinedButton(
@@ -374,8 +444,8 @@ fun FrameIconButton(
         shape = CircleShape,
         contentPadding = PaddingValues( 0.dp),
         modifier = Modifier
-            .padding(end = 24.dp)
-            .size(iconSize.dp) //48.dp
+            .padding(12.dp)
+            .size(iconSize.dp)
     ) {
         Icon(
             painterResource(id = iconIcon),
@@ -488,7 +558,7 @@ fun SpiderCameraVertical(
         tint = iconColor,
         modifier = Modifier
             .padding(vertical = 8.dp)
-            .height(190.dp)
+            .height(172.dp)
     )
 }
 
@@ -585,5 +655,71 @@ fun SpiderCameraButtonHorizontal(
         modifier = Modifier.size(32.dp)
     ) {
         Text(text = label, style = MaterialTheme.typography.bodyLarge)
+    }
+}
+
+@Composable
+fun SpiderPersonOrientationButton(
+    personOrientation: PersonOrientation,
+    personOrientationButton: PersonOrientation, //button in static
+    staticPersonOrientation: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+){
+    val iconColor: Color
+    val iconIcon: Int
+    when (personOrientationButton) {
+        PersonOrientation.StaticForward -> {
+            iconIcon = if (staticPersonOrientation) R.drawable.object_static_forward_backward else R.drawable.object_forward
+            iconColor = when (personOrientation) {
+                PersonOrientation.StaticForward -> Color.White
+                PersonOrientation.MoveForward -> Color.White
+                else -> ButtonDarkGray
+            }
+        }
+        PersonOrientation.StaticBackward -> {
+            iconIcon = if (staticPersonOrientation) R.drawable.object_static_forward_backward else R.drawable.object_backward
+            iconColor = when (personOrientation) {
+                PersonOrientation.StaticBackward -> Color.White
+                PersonOrientation.MoveBackward -> Color.White
+                else -> ButtonDarkGray
+            }
+        }
+        PersonOrientation.StaticLeft -> {
+            iconIcon = if (staticPersonOrientation) R.drawable.object_static_left_right else R.drawable.object_left
+            iconColor = when (personOrientation) {
+                PersonOrientation.StaticLeft -> Color.White
+                PersonOrientation.MoveLeft -> Color.White
+                else -> ButtonDarkGray
+            }
+        }
+        PersonOrientation.StaticRight -> {
+            iconIcon = if (staticPersonOrientation) R.drawable.object_static_left_right else R.drawable.object_right
+            iconColor = when (personOrientation) {
+                PersonOrientation.StaticRight -> Color.White
+                PersonOrientation.MoveRight -> Color.White
+                else -> ButtonDarkGray
+            }
+        }
+        else -> {
+            iconIcon = R.drawable.person_detail
+            iconColor = Color.Green
+        }
+    }
+    Button(onClick = onClick,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = DarkGray,
+            contentColor = iconColor
+        ),
+        shape = RoundedCornerShape(1.dp),
+        contentPadding = PaddingValues( 0.dp),
+        modifier = Modifier
+            .size(32.dp)
+    ) {
+        Icon(
+            painterResource(id = iconIcon),
+            contentDescription = personOrientationButton.toString(),
+            modifier = Modifier.size(32.dp)
+        )
     }
 }
