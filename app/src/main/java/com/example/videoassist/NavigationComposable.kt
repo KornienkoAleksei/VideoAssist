@@ -25,6 +25,7 @@ fun Navigation (navController: NavHostController,
                 database = database
             )
         }
+        //Clip screen
         composable("ClipScreen/{currentClip}", arguments = listOf(navArgument("currentClip") {
             defaultValue = 0
             NavType.IntType
@@ -40,6 +41,7 @@ fun Navigation (navController: NavHostController,
                 )
             }
         }
+        //New footage
         composable("NewFootage/{currentClip}", arguments = listOf(navArgument("currentClip") {
             defaultValue = 0
             NavType.IntType

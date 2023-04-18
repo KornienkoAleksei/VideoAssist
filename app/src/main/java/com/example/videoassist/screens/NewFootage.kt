@@ -1,12 +1,19 @@
 package com.example.videoassist
 
 import android.content.Context
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
@@ -29,6 +36,7 @@ import com.example.videoassist.ui.theme.ButtonDarkGray
 import com.example.videoassist.ui.theme.ButtonLightGray
 import com.example.videoassist.ui.theme.DarkGray
 import com.example.videoassist.ui.theme.MainTextColor
+import kotlinx.coroutines.launch
 import java.util.EventObject
 
 @Composable
@@ -37,14 +45,19 @@ fun NewFootage(
     currentIdClip: Int,
     database: AppDatabase,
 ){
-    val currentClip by database.databaseDao().getClip(currentIdClip).observeAsState()
+    val coroutineScope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
-    var number = 1
+
+    val currentDatabaseClip by database.databaseDao().getClip(currentIdClip).observeAsState()
+    var currentClip by remember {
+        mutableStateOf(ClipItemRoom(0,"","","", emptyList<Footage>(), emptyList<EquipmentClip>())) }
     var person by remember { mutableStateOf(true) }
     var frame by remember { mutableStateOf(Frame.Landscape) }
     var cameraMovementVertical by remember { mutableStateOf(CameraMovementVertical.Static) }
     var cameraMovementHorizontal by remember { mutableStateOf(CameraMovementHorizontal.Static) }
     var personOrientation by remember { mutableStateOf(PersonOrientation.StaticForward) }
+    var selectedEquipment by remember { mutableStateOf(0)}
+    var clipNotes by remember { mutableStateOf("") }
     val staticPersonOrientation =
             when (personOrientation) { PersonOrientation.StaticRight -> true
                 PersonOrientation.StaticLeft -> true
@@ -54,8 +67,10 @@ fun NewFootage(
                 PersonOrientation.MoveBackward -> false
                 PersonOrientation.MoveLeft -> false
                 PersonOrientation.MoveRight -> false}
-    currentClip?.let {
-        number += currentClip!!.footage.size
+    var footageNumber = 1
+    currentDatabaseClip?.let {
+        currentClip = currentDatabaseClip as ClipItemRoom
+        footageNumber += currentDatabaseClip!!.footage.size
     }
     Column(modifier = Modifier
         .fillMaxSize()
@@ -65,20 +80,28 @@ fun NewFootage(
             )
         }
     ) {
+        val scrollState = rememberScrollState()
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
                 .padding(top = 16.dp)
+                .verticalScroll(scrollState)
         ) {
-            FootageHeader(number = number, navController = navController)
-            FootageToggleButton(person = person, onClickPerson = {person = true}, onClickObject = {
-                person = false
-                if (frame == Frame.FullBody || frame == Frame.Face) {
-                    frame = Frame.Body
-                }
-            })
-            Row(modifier = Modifier.padding(start = 4.dp, bottom = 32.dp)) {
+            // Header
+            FootageHeader(number = footageNumber, navController = navController)
+            // Person <-> Objects toggle button
+            FootageToggleButton(
+                person = person,
+                onClickPerson = { person = true },
+                onClickObject = {
+                    person = false
+                    if (frame == Frame.FullBody || frame == Frame.Face) {
+                        frame = Frame.Body
+                    }
+                })
+            //Frame Icon Buttons
+            Row(modifier = Modifier.padding(start = 4.dp, bottom = 12.dp)) {
                 FrameIconButton(
                     currentFrame = frame,
                     buttonFrame = Frame.Landscape,
@@ -114,6 +137,7 @@ fun NewFootage(
                     iconSize = 48,
                     onClick = { frame = Frame.Detail })
             }
+            //Text Block
             FootageTextMovement(
                 cameraMovementVertical = cameraMovementVertical,
                 cameraMovementHorizontal = cameraMovementHorizontal,
@@ -146,8 +170,10 @@ fun NewFootage(
                         })
                 }
                 //camera movement horizontal
-                Column(horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(horizontal = 8.dp)) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                ) {
                     SpiderCameraButtonHorizontal(
                         cameraMovementHorizontal = cameraMovementHorizontal,
                         cameraMovementHorizontalButton = CameraMovementHorizontal.Left,
@@ -163,7 +189,10 @@ fun NewFootage(
                                 cameraMovementHorizontal =
                                     if (cameraMovementHorizontal != CameraMovementHorizontal.PanoramicLeft) CameraMovementHorizontal.PanoramicLeft else CameraMovementHorizontal.Static
                             })
-                        SpiderCameraHorizontal(cameraMovementHorizontal = cameraMovementHorizontal, direction = true)
+                        SpiderCameraHorizontal(
+                            cameraMovementHorizontal = cameraMovementHorizontal,
+                            direction = true
+                        )
                         SpiderCameraButtonHorizontal(
                             cameraMovementHorizontal = cameraMovementHorizontal,
                             cameraMovementHorizontalButton = CameraMovementHorizontal.OrbitLeft,
@@ -172,7 +201,7 @@ fun NewFootage(
                                     if (cameraMovementHorizontal != CameraMovementHorizontal.OrbitLeft) CameraMovementHorizontal.OrbitLeft else CameraMovementHorizontal.Static
                             })
                     }
-                    Row(verticalAlignment = Alignment.CenterVertically ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         SpiderCameraButtonHorizontal(
                             cameraMovementHorizontal = cameraMovementHorizontal,
                             cameraMovementHorizontalButton = CameraMovementHorizontal.Backward,
@@ -187,7 +216,9 @@ fun NewFootage(
                             modifier = Modifier.padding(start = 5.dp, end = 8.dp)
                         )
                         TextButton(
-                            onClick = { cameraMovementHorizontal = CameraMovementHorizontal.Static },
+                            onClick = {
+                                cameraMovementHorizontal = CameraMovementHorizontal.Static
+                            },
                             shape = RoundedCornerShape(1.dp),
                             contentPadding = PaddingValues(0.dp),
                             modifier = Modifier.size(32.dp)
@@ -196,7 +227,7 @@ fun NewFootage(
                                 painterResource(id = R.drawable.camera_icon),
                                 contentDescription = "",
                                 tint = if (cameraMovementHorizontal == CameraMovementHorizontal.Static) Color.White else ButtonDarkGray,
-                                )
+                            )
                         }
                         Icon(
                             painterResource(id = R.drawable.camera_horizontal_forward),
@@ -220,7 +251,10 @@ fun NewFootage(
                                 cameraMovementHorizontal =
                                     if (cameraMovementHorizontal != CameraMovementHorizontal.PanoramicRight) CameraMovementHorizontal.PanoramicRight else CameraMovementHorizontal.Static
                             })
-                        SpiderCameraHorizontal(cameraMovementHorizontal = cameraMovementHorizontal, direction = false)
+                        SpiderCameraHorizontal(
+                            cameraMovementHorizontal = cameraMovementHorizontal,
+                            direction = false
+                        )
                         SpiderCameraButtonHorizontal(
                             cameraMovementHorizontal = cameraMovementHorizontal,
                             cameraMovementHorizontalButton = CameraMovementHorizontal.OrbitRight,
@@ -251,7 +285,7 @@ fun NewFootage(
 
                             }
                         })
-                    Row(verticalAlignment = Alignment.CenterVertically ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         SpiderPersonOrientationButton(
                             personOrientation = personOrientation,
                             personOrientationButton = PersonOrientation.StaticForward,
@@ -260,7 +294,8 @@ fun NewFootage(
                                 personOrientation = when (personOrientation) {
                                     PersonOrientation.StaticForward -> PersonOrientation.MoveForward
                                     PersonOrientation.MoveForward -> PersonOrientation.StaticForward
-                                    else -> if (staticPersonOrientation) PersonOrientation.StaticForward else PersonOrientation.MoveForward }
+                                    else -> if (staticPersonOrientation) PersonOrientation.StaticForward else PersonOrientation.MoveForward
+                                }
                             })
                         FrameIconButton(
                             currentFrame = frame,
@@ -276,7 +311,8 @@ fun NewFootage(
                                     PersonOrientation.StaticBackward -> PersonOrientation.MoveBackward
                                     PersonOrientation.StaticForward -> PersonOrientation.MoveForward
                                     PersonOrientation.StaticLeft -> PersonOrientation.MoveLeft
-                                    PersonOrientation.StaticRight -> PersonOrientation.MoveRight}
+                                    PersonOrientation.StaticRight -> PersonOrientation.MoveRight
+                                }
                             })
                         SpiderPersonOrientationButton(
                             personOrientation = personOrientation,
@@ -286,10 +322,10 @@ fun NewFootage(
                                 personOrientation = when (personOrientation) {
                                     PersonOrientation.StaticBackward -> PersonOrientation.MoveBackward
                                     PersonOrientation.MoveBackward -> PersonOrientation.StaticBackward
-                                    else -> if (staticPersonOrientation) PersonOrientation.StaticBackward else PersonOrientation.MoveBackward}
+                                    else -> if (staticPersonOrientation) PersonOrientation.StaticBackward else PersonOrientation.MoveBackward
+                                }
                             })
                     }
-
                     SpiderPersonOrientationButton(
                         personOrientation = personOrientation,
                         personOrientationButton = PersonOrientation.StaticRight,
@@ -298,16 +334,51 @@ fun NewFootage(
                             personOrientation = when (personOrientation) {
                                 PersonOrientation.StaticRight -> PersonOrientation.MoveRight
                                 PersonOrientation.MoveRight -> PersonOrientation.StaticRight
-                                else -> if (staticPersonOrientation) PersonOrientation.StaticRight else PersonOrientation.MoveRight}
+                                else -> if (staticPersonOrientation) PersonOrientation.StaticRight else PersonOrientation.MoveRight
+                            }
                         })
 
                 }
             }
-
+            //Equipment
+            ClipEquipmentButtons(
+                selectedEquipment = selectedEquipment,
+                equipment = currentClip.equipment,
+                onClickEquipment = { selectedEquipment = it },
+                onClickAdd = { /*GO TO AddEquipmentToClip screen*/ })
+            //notes
+            InputField(
+                value = clipNotes,
+                onValueChange = { clipNotes = it; },
+                label = stringResource(id = R.string.notes),
+                singleLine = false,
+                focusManager = focusManager,
+            )
         }
+        //save button
+        SaveButton(onClick = {
+            val currentFootage = Footage(
+                person = person,
+                frame = frame,
+                cameraMovementVertical = cameraMovementVertical,
+                cameraMovementHorizontal = cameraMovementHorizontal,
+                personOrientation = personOrientation,
+                idEquipment = selectedEquipment,
+                notes = clipNotes
+            )
+            for (equipment in currentClip.equipment){
+                if (selectedEquipment == equipment.idEquipment) {
+                    equipment.counterEquipment ++
+                }
+            }
+            currentClip.footage += currentFootage
+            coroutineScope.launch {
+                database.databaseDao().updateClip(currentClip)
+            }
+            navController.navigateUp()
+        })
     }
 }
-
 
 @Composable
 fun FootageHeader(
@@ -355,7 +426,7 @@ fun FootageToggleButton(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .padding(top = 16.dp, bottom = 4.dp)
+            .padding(top = 16.dp, bottom = 12.dp)
             .height(40.dp)
     ) {
         OutlinedButton(
@@ -721,5 +792,81 @@ fun SpiderPersonOrientationButton(
             contentDescription = personOrientationButton.toString(),
             modifier = Modifier.size(32.dp)
         )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun ClipEquipmentButtons(
+    selectedEquipment: Int,
+    equipment: List<EquipmentClip>,
+    onClickEquipment: (Int) -> Unit,
+    onClickAdd: () -> Unit,
+    modifier: Modifier = Modifier,
+){
+    Text(
+        text = stringResource(id = R.string.equipment),
+        style = MaterialTheme.typography.titleMedium,
+        color = Color.White,
+        modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+    )
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 8.dp)
+    ) {
+        repeat(equipment.size) {
+            val thisEquipment = selectedEquipment == equipment[it].idEquipment
+            OutlinedButton(
+                onClick = { onClickEquipment(equipment[it].idEquipment) },
+                shape = RoundedCornerShape(50),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = if (thisEquipment) Color.White else DarkGray,
+                    contentColor = Color.White,
+                ),
+                contentPadding = PaddingValues(start = 12.dp, end = 12.dp),
+                modifier = Modifier
+                    .padding(bottom = 8.dp)
+                    .height(32.dp),
+            ) {
+                if (thisEquipment) {
+                    Icon(
+                        Icons.Default.Check,
+                        contentDescription = equipment[it].nameEquipment,
+                        tint = Color.Black,
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .size(14.dp)
+                    )
+                }
+                Text(
+                    text = equipment[it].nameEquipment,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (thisEquipment) Color.Black else Color.White,
+                )
+            }
+        }
+        repeat(1){
+            OutlinedButton(
+                onClick = onClickAdd,
+                shape = CircleShape,
+                contentPadding = PaddingValues(0.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = DarkGray,
+                    contentColor = Color.White,
+                ),
+                modifier = Modifier
+                    .padding(bottom = 8.dp)
+                    .size(32.dp),
+            ) {
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = stringResource(id = R.string.addIcon),
+                    tint = Color.White,
+                    modifier = Modifier.size(12.dp)
+                )
+            }
+        }
     }
 }

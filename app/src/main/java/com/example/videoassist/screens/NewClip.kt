@@ -56,12 +56,14 @@ fun NewClip(
                 .weight(1f)
                 .padding(top = 16.dp)
         ) {
+            //Header
             item {
                 HeaderNew(
                     label = stringResource(id = R.string.createClip),
                     navController = navController
                 )
             }
+            //Clip Name Field
             item {
                 InputField(
                     value = clipName,
@@ -71,6 +73,7 @@ fun NewClip(
                     focusManager = focusManager,
                 )
             }
+            //Clip Description Field
             item {
                 InputField(
                     value = clipDescription,
@@ -80,6 +83,7 @@ fun NewClip(
                     focusManager = focusManager,
                 )
             }
+            //Select an equipment
             item {
                 Text(
                     text = stringResource(id = R.string.selectEquipment),
@@ -88,6 +92,7 @@ fun NewClip(
                     modifier = Modifier.padding(start = 16.dp, top = 32.dp, bottom = 16.dp)
                 )
             }
+            //Draw each equipment
             if (databaseEquipment.isNotEmpty()) {
                 items(databaseEquipment.size) { item ->
                     selectedEquipment = equipmentSet.contains(databaseEquipment[item].idEquipment)
@@ -104,36 +109,14 @@ fun NewClip(
                         })
                 }
             }
+            //add equipment Button
             item {
-                OutlinedButton(
-                    onClick = {
-                        focusManager.clearFocus()
+                AddEquipmentButton(focusRequester = focusRequester,
+                    onClick = { focusManager.clearFocus()
                         focusRequester.requestFocus()
-                        createNewEquipment = true
-                    },
-                    shape = RoundedCornerShape(50.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = DarkGray,
-                        contentColor = Color.White
-                    ),
-                    border = BorderStroke(width = 1.dp, color = ButtonGray),
-                    modifier = Modifier
-                        .padding(bottom = 32.dp)
-                        .padding(start = 16.dp, bottom = 16.dp)
-                        .focusRequester(focusRequester)
-
-                ) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = stringResource(id = R.string.addIcon),
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Text(
-                        text = stringResource(id = R.string.add),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
+                        createNewEquipment = true })
             }
+            //New Equipment Alert Dialog
             if (createNewEquipment) {
                 item {
                     AlertDialog(
@@ -192,9 +175,37 @@ fun NewClip(
                     )
                 }
             }
-
         }
         //button save
+        SaveButton(onClick = {
+            focusManager.clearFocus()
+            if (clipName !== "") {
+                val currentDate = Calendar.getInstance().time
+                val dateFormat = SimpleDateFormat("dd MMM, yyyy", Locale.getDefault())
+                val formattedDate = dateFormat.format(currentDate)
+                val equipmentList = mutableListOf<EquipmentClip>()
+                for (equipment in equipmentSet) {
+                    val equipmentInstance = EquipmentClip (
+                        idEquipment = equipment.key,
+                        nameEquipment = equipment.value,
+                        counterEquipment = 0,)
+                    equipmentList.add(equipmentInstance)
+                }
+                val newClip = ClipItemRoom(
+                    idClip = 0,
+                    creationDate = formattedDate,
+                    clipName = clipName,
+                    clipDescription = clipDescription,
+                    footage = emptyList(),
+                    equipment = equipmentList,
+                )
+                coroutineScope.launch {
+                    database.databaseDao().insertClip(newClip)
+                }
+                navController.navigateUp()
+            }
+        })
+        /*
         Button(
             onClick = {
                 focusManager.clearFocus()
@@ -207,8 +218,7 @@ fun NewClip(
                         val equipmentInstance = EquipmentClip (
                             idEquipment = equipment.key,
                             nameEquipment = equipment.value,
-                            counterEquipment = 0,
-                                )
+                            counterEquipment = 0,)
                         equipmentList.add(equipmentInstance)
                     }
                     val newClip = ClipItemRoom(
@@ -242,6 +252,8 @@ fun NewClip(
                 style = MaterialTheme.typography.labelLarge
             )
         }
+
+         */
     }
 }
 
@@ -303,6 +315,64 @@ fun SelectEquipment(
             text = value.nameEquipment,
             style = MaterialTheme.typography.bodyLarge,
             color = MainTextColor,
+        )
+    }
+}
+
+@Composable
+fun AddEquipmentButton(
+    focusRequester: FocusRequester,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+){
+    OutlinedButton(
+        onClick = onClick,
+        shape = RoundedCornerShape(50.dp),
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = DarkGray,
+            contentColor = Color.White
+        ),
+        border = BorderStroke(width = 1.dp, color = ButtonGray),
+        modifier = Modifier
+            .padding(bottom = 32.dp)
+            .padding(start = 16.dp, bottom = 16.dp)
+            .focusRequester(focusRequester)
+
+    ) {
+        Icon(
+            Icons.Default.Add,
+            contentDescription = stringResource(id = R.string.addIcon),
+            modifier = Modifier.size(18.dp)
+        )
+        Text(
+            text = stringResource(id = R.string.add),
+            style = MaterialTheme.typography.bodyMedium
+        )
+    }
+}
+
+@Composable
+fun SaveButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+){
+    Button(
+        onClick = onClick,
+        shape = RoundedCornerShape(26.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.White,
+            contentColor = Color.Black
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 32.dp)
+            .height(52.dp)
+            .padding(horizontal = 16.dp)
+        //.weight(1f)
+    ) {
+        Text(
+            text = stringResource(id = R.string.saveCap),
+            style = MaterialTheme.typography.labelLarge
         )
     }
 }

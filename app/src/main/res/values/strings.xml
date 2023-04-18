@@ -14,6 +14,7 @@
     <string name="createClip">Create a new clip</string>
     <string name="add">Add</string>
     <string name="newEquipment">New Equipment</string>
+    <string name="equipment">Equipment</string>
     <string name="movieIcon">Movie Icon</string>
     <string name="libraryIcon">Library Icon</string>
     <string name="noFootage">No added footages</string>
@@ -30,6 +31,7 @@
     <string name="personFace">person face</string>
     <string name="personFullBody">person full body</string>
     <string name="personLandscape">person landscape</string>
+    <string name="notes">Notes</string>
 
     <string name="MoveLeft">Move left</string>
     <string name="MoveRight">Move right</string>

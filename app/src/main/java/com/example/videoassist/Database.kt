@@ -11,8 +11,8 @@ data class ClipItemRoom (
     val creationDate: String,
     val clipName: String,
     val clipDescription: String,
-    val footage: List<Footage>,
-    val equipment: List<EquipmentClip>
+    var footage: List<Footage>,
+    var equipment: List<EquipmentClip>
 )
 
 @Entity
@@ -44,7 +44,7 @@ data class Footage (
 data class EquipmentClip (
     val idEquipment: Int,
     val nameEquipment: String,
-    val counterEquipment: Int,
+    var counterEquipment: Int,
 )
 
 class Converters {
@@ -84,6 +84,8 @@ interface DatabaseDao {
     @Insert
     suspend fun insertEquipment(vararg equipment: EquipmentRoom)
 
+    @Update
+    suspend fun updateClip(vararg clip: ClipItemRoom)
 }
 
 /*
