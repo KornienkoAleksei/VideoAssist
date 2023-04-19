@@ -20,14 +20,14 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 private val DarkColorScheme = darkColorScheme(
     primary = DarkGray,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    secondary = DarkGray,
+    tertiary = DarkGray
 )
 
 private val LightColorScheme = lightColorScheme(
     primary = DarkGray,
-    secondary = PurpleGrey40,
-    tertiary = Pink40,
+    secondary = DarkGray,
+    tertiary = DarkGray,
 
     //Other default colors to override
     background = DarkGray,

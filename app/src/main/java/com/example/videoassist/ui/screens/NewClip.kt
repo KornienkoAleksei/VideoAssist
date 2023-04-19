@@ -11,7 +11,9 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.graphics.Color
@@ -20,11 +22,13 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.videoassist.screens.commoncomposable.SaveButton
 import com.example.videoassist.ui.theme.*
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun NewClip(
     navController: NavController,
@@ -40,6 +44,8 @@ fun NewClip(
     val focusRequester = remember { FocusRequester() }
     val equipmentSet by remember { mutableStateOf(mutableMapOf<Int, String>())}
     var selectedEquipment by remember { mutableStateOf(false) }
+    var newEquipmentName by remember { mutableStateOf("") }
+    var newEquipmentConditional by remember { mutableStateOf(false) }
     Column(modifier = Modifier
         .fillMaxSize()
         .pointerInput(Unit) {
@@ -94,10 +100,25 @@ fun NewClip(
             }
             //Draw each equipment
             if (databaseEquipment.isNotEmpty()) {
+                //add selected for new equipment
+                if (newEquipmentConditional){
+                    var databaseUpdate = false
+                    for (equipment in databaseEquipment){
+                        if (newEquipmentName == equipment.nameEquipment){
+                            equipmentSet[equipment.idEquipment] =
+                                equipment.nameEquipment
+                            databaseUpdate = true
+                        }
+                    }
+                    if (databaseUpdate) {
+                    newEquipmentConditional = false
+                    newEquipmentName = ""}
+                }
+                //draw equipment
                 items(databaseEquipment.size) { item ->
                     selectedEquipment = equipmentSet.contains(databaseEquipment[item].idEquipment)
                     SelectEquipment(value = databaseEquipment[item],
-                        selectedEquipment,
+                        selectedEquipment = selectedEquipment,
                         onChecked = {
                             selectedEquipment = it
                             if (selectedEquipment) {
@@ -112,9 +133,13 @@ fun NewClip(
             //add equipment Button
             item {
                 AddEquipmentButton(focusRequester = focusRequester,
-                    onClick = { focusManager.clearFocus()
+                    onClick = { focusManager.moveFocus(FocusDirection.Down)
                         focusRequester.requestFocus()
-                        createNewEquipment = true })
+                        createNewEquipment = true
+                        coroutineScope.launch {
+                            lazyColumnState.scrollToItem(lazyColumnState.layoutInfo.totalItemsCount - 1)
+                        }
+                    })
             }
             //New Equipment Alert Dialog
             if (createNewEquipment) {
@@ -122,42 +147,50 @@ fun NewClip(
                     AlertDialog(
                         onDismissRequest = {
                             createNewEquipment = false
-                            equipmentName = ""
+                            newEquipmentName = ""
                         },
                         confirmButton = {
-                            TextButton(onClick = {
-                                if (equipmentName.isNotEmpty()) {
-                                    val newEquipment = EquipmentRoom(
-                                        nameEquipment = equipmentName,
-                                        idEquipment = 0
-                                    )
-                                    coroutineScope.launch {
-                                        database.databaseDao().insertEquipment(newEquipment)
+                            TextButton(
+                                onClick = {
+                                    if (newEquipmentName.isNotEmpty()) {
+                                        val newEquipment = EquipmentRoom(
+                                            nameEquipment = newEquipmentName,
+                                            idEquipment = 0,
+                                            activeEquipment = true,
+                                        )
+                                        coroutineScope.launch {
+                                            database.databaseDao().insertEquipment(newEquipment)
+                                        }
                                     }
-                                    equipmentName = ""
-                                }
-                                createNewEquipment = false
-                            }) {
+                                    createNewEquipment = false
+                                    newEquipmentConditional = true
+                                },
+                            ) {
                                 Text(
                                     text = stringResource(id = R.string.save),
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White
+                                    color = Color.White,
                                 )
                             }
                         },
                         dismissButton = {
-                            TextButton(onClick = { createNewEquipment = false; }) {
+                            TextButton(
+                                onClick = {
+                                    createNewEquipment = false;
+                                    newEquipmentName = ""
+                                },
+                            ) {
                                 Text(
                                     text = stringResource(id = R.string.cancel),
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White
+                                    color = Color.White,
                                 )
                             }
                         },
                         title = {
                             Text(
                                 text = stringResource(id = R.string.newEquipment),
-                                style = MaterialTheme.typography.displaySmall
+                                style = MaterialTheme.typography.displaySmall,
                             )
                         },
                         containerColor = DarkGray,
@@ -165,13 +198,14 @@ fun NewClip(
                         textContentColor = Color.White,
                         text = {
                             InputField(
-                                value = equipmentName,
-                                onValueChange = { equipmentName = it; },
+                                value = newEquipmentName,
+                                onValueChange = { newEquipmentName = it; },
                                 label = stringResource(id = R.string.name),
                                 singleLine = true,
                                 focusManager = focusManager,
                             )
-                        }
+                        },
+                        modifier = Modifier.focusRequester(focusRequester),
                     )
                 }
             }
@@ -205,55 +239,6 @@ fun NewClip(
                 navController.navigateUp()
             }
         })
-        /*
-        Button(
-            onClick = {
-                focusManager.clearFocus()
-                if (clipName !== "") {
-                    val currentDate = Calendar.getInstance().time
-                    val dateFormat = SimpleDateFormat("dd MMM, yyyy", Locale.getDefault())
-                    val formattedDate = dateFormat.format(currentDate)
-                    val equipmentList = mutableListOf<EquipmentClip>()
-                    for (equipment in equipmentSet) {
-                        val equipmentInstance = EquipmentClip (
-                            idEquipment = equipment.key,
-                            nameEquipment = equipment.value,
-                            counterEquipment = 0,)
-                        equipmentList.add(equipmentInstance)
-                    }
-                    val newClip = ClipItemRoom(
-                        idClip = 0,
-                        creationDate = formattedDate,
-                        clipName = clipName,
-                        clipDescription = clipDescription,
-                        footage = emptyList(),
-                        equipment = equipmentList,
-                    )
-                    coroutineScope.launch {
-                        database.databaseDao().insertClip(newClip)
-                    }
-                    navController.navigateUp()
-                }
-            },
-            shape = RoundedCornerShape(26.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.White,
-                contentColor = Color.Black
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 32.dp)
-                .height(52.dp)
-                .padding(horizontal = 16.dp)
-            //.weight(1f)
-        ) {
-            Text(
-                text = stringResource(id = R.string.saveCap),
-                style = MaterialTheme.typography.labelLarge
-            )
-        }
-
-         */
     }
 }
 
@@ -347,32 +332,6 @@ fun AddEquipmentButton(
         Text(
             text = stringResource(id = R.string.add),
             style = MaterialTheme.typography.bodyMedium
-        )
-    }
-}
-
-@Composable
-fun SaveButton(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-){
-    Button(
-        onClick = onClick,
-        shape = RoundedCornerShape(26.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color.White,
-            contentColor = Color.Black
-        ),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 32.dp)
-            .height(52.dp)
-            .padding(horizontal = 16.dp)
-        //.weight(1f)
-    ) {
-        Text(
-            text = stringResource(id = R.string.saveCap),
-            style = MaterialTheme.typography.labelLarge
         )
     }
 }

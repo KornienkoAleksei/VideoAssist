@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.*
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.videoassist.ui.screens.AddEquipmentToClip
+import com.example.videoassist.ui.screens.NewFootage
 
 @Composable
 fun Navigation (navController: NavHostController,
@@ -35,8 +37,6 @@ fun Navigation (navController: NavHostController,
                 ClipScreen(
                     navController = navController,
                     currentIdClip = currentClip,
-                    databaseClips = databaseClips,
-                    databaseEquipment = databaseEquipment,
                     database = database,
                 )
             }
@@ -51,6 +51,21 @@ fun Navigation (navController: NavHostController,
                 NewFootage(
                     navController = navController,
                     currentIdClip = currentClip,
+                    database = database
+                )
+            }
+        }
+        //Add Equipment To Clip
+        composable("AddEquipmentToClip/{currentClip}", arguments = listOf(navArgument("currentClip") {
+            defaultValue = 0
+            NavType.IntType
+        })){
+            val currentClip = it.arguments?.getInt("currentClip")
+            currentClip?.let {
+                AddEquipmentToClip(
+                    navController = navController,
+                    currentIdClip = currentClip,
+                    databaseEquipment = databaseEquipment,
                     database = database
                 )
             }

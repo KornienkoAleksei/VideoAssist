@@ -18,7 +18,8 @@ data class ClipItemRoom (
 @Entity
 data class EquipmentRoom(
     @PrimaryKey(autoGenerate = true) val idEquipment: Int,
-    val nameEquipment: String
+    val nameEquipment: String,
+    var activeEquipment: Boolean
 )
 
 enum class Frame { Landscape, FullBody, Body, Face, Detail}
@@ -86,6 +87,9 @@ interface DatabaseDao {
 
     @Update
     suspend fun updateClip(vararg clip: ClipItemRoom)
+
+    @Update
+    suspend fun updateEquipment(vararg equipment: EquipmentRoom)
 }
 
 /*

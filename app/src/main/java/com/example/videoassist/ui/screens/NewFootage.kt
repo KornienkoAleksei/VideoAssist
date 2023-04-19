@@ -1,15 +1,7 @@
-package com.example.videoassist
+package com.example.videoassist.ui.screens
 
-import android.content.Context
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,19 +17,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.videoassist.*
+import com.example.videoassist.R
+import com.example.videoassist.screens.commoncomposable.FrameIconButton
+import com.example.videoassist.screens.commoncomposable.SaveButton
 import com.example.videoassist.ui.theme.ButtonDarkGray
 import com.example.videoassist.ui.theme.ButtonLightGray
 import com.example.videoassist.ui.theme.DarkGray
 import com.example.videoassist.ui.theme.MainTextColor
 import kotlinx.coroutines.launch
-import java.util.EventObject
 
 @Composable
 fun NewFootage(
@@ -106,36 +100,46 @@ fun NewFootage(
                     currentFrame = frame,
                     buttonFrame = Frame.Landscape,
                     person = person,
-                    iconSize = 48,
-                    onClick = { frame = Frame.Landscape })
+                    enabled = true,
+                    onClick = { frame = Frame.Landscape },
+                    modifierButton = Modifier.padding(12.dp).size(48.dp),
+                    modifierIcon = Modifier.size(48.dp))
                 if (person) {
                     FrameIconButton(
                         currentFrame = frame,
                         buttonFrame = Frame.FullBody,
                         person = person,
-                        iconSize = 48,
-                        onClick = { frame = Frame.FullBody })
+                        enabled = true,
+                        onClick = { frame = Frame.FullBody },
+                        modifierButton = Modifier.padding(12.dp).size(48.dp),
+                        modifierIcon = Modifier.size(48.dp))
                 }
                 FrameIconButton(
                     currentFrame = frame,
                     buttonFrame = Frame.Body,
                     person = person,
-                    iconSize = 48,
-                    onClick = { frame = Frame.Body })
+                    enabled = true,
+                    onClick = { frame = Frame.Body },
+                    modifierButton = Modifier.padding(12.dp).size(48.dp),
+                    modifierIcon = Modifier.size(48.dp))
                 if (person) {
                     FrameIconButton(
                         currentFrame = frame,
                         buttonFrame = Frame.Face,
                         person = person,
-                        iconSize = 48,
-                        onClick = { frame = Frame.Face })
+                        enabled = true,
+                        onClick = { frame = Frame.Face },
+                        modifierButton = Modifier.padding(12.dp).size(48.dp),
+                        modifierIcon = Modifier.size(48.dp))
                 }
                 FrameIconButton(
                     currentFrame = frame,
                     buttonFrame = Frame.Detail,
                     person = person,
-                    iconSize = 48,
-                    onClick = { frame = Frame.Detail })
+                    enabled = true,
+                    onClick = { frame = Frame.Detail },
+                    modifierButton = Modifier.padding(12.dp).size(48.dp),
+                    modifierIcon = Modifier.size(48.dp))
             }
             //Text Block
             FootageTextMovement(
@@ -301,7 +305,7 @@ fun NewFootage(
                             currentFrame = frame,
                             buttonFrame = frame,
                             person = person,
-                            iconSize = 32,
+                            enabled = true,
                             onClick = {
                                 personOrientation = when (personOrientation) {
                                     PersonOrientation.MoveBackward -> PersonOrientation.StaticBackward
@@ -311,9 +315,9 @@ fun NewFootage(
                                     PersonOrientation.StaticBackward -> PersonOrientation.MoveBackward
                                     PersonOrientation.StaticForward -> PersonOrientation.MoveForward
                                     PersonOrientation.StaticLeft -> PersonOrientation.MoveLeft
-                                    PersonOrientation.StaticRight -> PersonOrientation.MoveRight
-                                }
-                            })
+                                    PersonOrientation.StaticRight -> PersonOrientation.MoveRight}},
+                            modifierButton = Modifier.padding(12.dp).size(32.dp),
+                            modifierIcon = Modifier.size(32.dp))
                         SpiderPersonOrientationButton(
                             personOrientation = personOrientation,
                             personOrientationButton = PersonOrientation.StaticBackward,
@@ -345,7 +349,7 @@ fun NewFootage(
                 selectedEquipment = selectedEquipment,
                 equipment = currentClip.equipment,
                 onClickEquipment = { selectedEquipment = it },
-                onClickAdd = { /*GO TO AddEquipmentToClip screen*/ })
+                onClickAdd = { navController.navigate("AddEquipmentToClip/${currentIdClip}") })
             //notes
             InputField(
                 value = clipNotes,
@@ -357,25 +361,27 @@ fun NewFootage(
         }
         //save button
         SaveButton(onClick = {
-            val currentFootage = Footage(
-                person = person,
-                frame = frame,
-                cameraMovementVertical = cameraMovementVertical,
-                cameraMovementHorizontal = cameraMovementHorizontal,
-                personOrientation = personOrientation,
-                idEquipment = selectedEquipment,
-                notes = clipNotes
-            )
-            for (equipment in currentClip.equipment){
-                if (selectedEquipment == equipment.idEquipment) {
-                    equipment.counterEquipment ++
+            if (selectedEquipment != 0) {
+                val currentFootage = Footage(
+                    person = person,
+                    frame = frame,
+                    cameraMovementVertical = cameraMovementVertical,
+                    cameraMovementHorizontal = cameraMovementHorizontal,
+                    personOrientation = personOrientation,
+                    idEquipment = selectedEquipment,
+                    notes = clipNotes
+                )
+                for (equipment in currentClip.equipment) {
+                    if (selectedEquipment == equipment.idEquipment) {
+                        equipment.counterEquipment++
+                    }
                 }
+                currentClip.footage += currentFootage
+                coroutineScope.launch {
+                    database.databaseDao().updateClip(currentClip)
+                }
+                navController.navigateUp()
             }
-            currentClip.footage += currentFootage
-            coroutineScope.launch {
-                database.databaseDao().updateClip(currentClip)
-            }
-            navController.navigateUp()
         })
     }
 }
@@ -490,41 +496,6 @@ fun FootageToggleButton(
     }
 }
 
-@Composable
-fun FrameIconButton(
-    currentFrame: Frame,
-    buttonFrame: Frame,
-    person: Boolean,
-    iconSize: Int,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-){
-    val active:Boolean = currentFrame == buttonFrame
-    val iconIcon = when (buttonFrame) {
-        Frame.Landscape -> if (person) R.drawable.person_landscape else R.drawable.object_landscape
-        Frame.FullBody -> R.drawable.person_fullbody
-        Frame.Body -> if (person) R.drawable.person_body else R.drawable.object_body
-        Frame.Face -> R.drawable.person_face
-        Frame.Detail -> if (person) R.drawable.person_detail else R.drawable.object_detail
-    }
-    Button(onClick = onClick,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (active) Color.White else ButtonDarkGray,
-            contentColor = if (active) Color.Black else ButtonLightGray
-        ),
-        shape = CircleShape,
-        contentPadding = PaddingValues( 0.dp),
-        modifier = Modifier
-            .padding(12.dp)
-            .size(iconSize.dp)
-    ) {
-        Icon(
-            painterResource(id = iconIcon),
-            contentDescription = buttonFrame.toString(),
-            modifier = Modifier.size(iconSize.dp)
-        )
-    }
-}
 
 @Composable
 fun FootageTextMovement(
@@ -618,9 +589,15 @@ fun SpiderCameraVertical(
     modifier: Modifier = Modifier,
 ){
     val iconId = when (cameraMovementVertical){
-        CameraMovementVertical.MoveUp -> {R.drawable.camera_vertical_up}
-        CameraMovementVertical.Static -> {R.drawable.camera_vertical_static}
-        CameraMovementVertical.MoveDown -> {R.drawable.camera_vertical_down}
+        CameraMovementVertical.MoveUp -> {
+            R.drawable.camera_vertical_up
+        }
+        CameraMovementVertical.Static -> {
+            R.drawable.camera_vertical_static
+        }
+        CameraMovementVertical.MoveDown -> {
+            R.drawable.camera_vertical_down
+        }
     }
     val iconColor = if (cameraMovementVertical == CameraMovementVertical.Static) ButtonDarkGray else Color.White
     Icon(

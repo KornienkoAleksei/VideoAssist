@@ -1,4 +1,4 @@
-package com.example.videoassist.screens
+package com.example.videoassist.ui.screens
 
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.*

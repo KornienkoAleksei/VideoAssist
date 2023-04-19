@@ -4,10 +4,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
@@ -19,6 +16,7 @@ import com.example.videoassist.ui.theme.CaptionColor
 import com.example.videoassist.ui.theme.LightGray
 import com.example.videoassist.ui.theme.MainTextColor
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InputField(
     value: String,
@@ -46,7 +44,8 @@ fun InputField(
             .fillMaxWidth(),
         colors = TextFieldDefaults.textFieldColors(
             disabledTextColor = Color.Gray,
-            textColor = MainTextColor,
+            focusedTextColor = MainTextColor,
+            unfocusedTextColor = MainTextColor,
             containerColor = LightGray,
             cursorColor = Color.White,
             errorCursorColor = Color.Red,

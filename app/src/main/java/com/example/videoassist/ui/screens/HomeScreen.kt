@@ -20,15 +20,94 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.videoassist.screens.commoncomposable.TagCard
 import com.example.videoassist.ui.theme.CaptionColor
 import com.example.videoassist.ui.theme.LightGray
 import com.example.videoassist.ui.theme.MainTextColor
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     navController: NavController,
     databaseClips: List<ClipItemRoom>
 ) {
+    Scaffold (
+        topBar = {
+                 Header()
+             },
+        floatingActionButtonPosition = FabPosition.End,
+        floatingActionButton = {
+            Button(
+                onClick = { navController.navigate(NewClip.route) },
+                shape = CircleShape,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.White,
+                    contentColor = Color.Black
+                ),
+                modifier = Modifier
+                    .padding(bottom = 24.dp, end = 16.dp)
+                    .size(84.dp)
+                //.align(Alignment.BottomEnd)
+            ) {
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = stringResource(id = R.string.addIcon),
+                    modifier = Modifier.size(36.dp)
+                )
+            }
+        },
+        content = {innerPadding ->
+            if (databaseClips.isEmpty()) {
+                Image(
+                    painter = painterResource(id = R.drawable.welcomescreenimage),
+                    contentDescription = stringResource(id = R.string.welcomeScreenImage),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        //.align(Alignment.Center)
+                )
+                Column(
+                    verticalArrangement = Arrangement.Bottom,
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        //.align(Alignment.TopStart)
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.greetings),
+                        style = MaterialTheme.typography.displayLarge,
+                        color = MainTextColor,
+                        modifier = Modifier
+                            .fillMaxWidth(0.65f)
+                            .padding(start = 32.dp, bottom = 48.dp)
+                    )
+                    Text(
+                        text = stringResource(id = R.string.greetingsBody),
+                        style = MaterialTheme.typography.displayMedium,
+                        color = CaptionColor,
+                        modifier = Modifier
+                            .fillMaxWidth(0.65f)
+                            .padding(start = 32.dp, bottom = 147.dp)
+                    )
+                }
+            }
+            val lazyColumnState = rememberLazyListState();
+            LazyColumn(
+                contentPadding = innerPadding,
+                state = lazyColumnState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    //.align(Alignment.TopCenter)
+            ) {
+                if (databaseClips.isNotEmpty()){
+                    items(databaseClips.size) {
+                        ClipList(clipItemRoom = databaseClips[databaseClips.size - 1 - it], navController = navController);
+                    }
+                }
+            }
+        }
+
+    )
+/*
     Box(modifier = Modifier.fillMaxSize()) {
         if (databaseClips.isEmpty()) {
             Image(
@@ -97,6 +176,8 @@ fun HomeScreen(
             )
         }
     }
+
+ */
 }
 
 @Composable
@@ -106,7 +187,7 @@ fun Header(modifier: Modifier = Modifier) {
             .fillMaxWidth()
             .height(64.dp)
             .padding(start = 4.dp)) {
-        IconButton(onClick = { /*TODO*/ },
+        IconButton(onClick = { /*use Navigation drawer*/ },
             colors = IconButtonDefaults.iconButtonColors(
                 containerColor = Color.Black.copy( alpha = 0.0F,),
                 contentColor = Color.White
@@ -125,7 +206,8 @@ fun Header(modifier: Modifier = Modifier) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ClipList (
     clipItemRoom: ClipItemRoom,
@@ -141,43 +223,39 @@ fun ClipList (
             .padding(horizontal = 16.dp)
             .padding(bottom = 8.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 52.dp)) {
+        Column(modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(top = 16.dp, bottom = 8.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 52.dp)
+            ) {
                 Icon(
                     painterResource(id = R.drawable.movie_48px),
                     contentDescription = stringResource(id = R.string.movieIcon),
                     modifier = Modifier.size(24.dp)
                 )
-                Text(text = clipItemRoom.creationDate,
+                Text(
+                    text = clipItemRoom.creationDate,
                     style = MaterialTheme.typography.labelSmall,
                     color = CaptionColor,
-                    modifier = Modifier.padding(start = 8.dp))
+                    modifier = Modifier.padding(start = 8.dp)
+                )
             }
-            Text(text = clipItemRoom.clipName, style = MaterialTheme.typography.displaySmall,
-                modifier = Modifier.padding(bottom = 16.dp))
-            //add function NOT to show if clipItemRoom.equipment[it].counterEquipment == 0
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                content = {
-                items(clipItemRoom.equipment.size) {
-                    Card(
-                        shape = RoundedCornerShape(50.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color.White,
-                            contentColor = Color.Black
-                        )
-                    ) {
-                        Text(
-                            text = clipItemRoom.equipment[it].nameEquipment + ": " + clipItemRoom.equipment[it].counterEquipment.toString(),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.Black,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+            Text(
+                text = clipItemRoom.clipName, style = MaterialTheme.typography.displaySmall,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                repeat(clipItemRoom.equipment.size) {
+                    if (clipItemRoom.equipment[it].counterEquipment != 0) {
+                        TagCard(
+                            label = clipItemRoom.equipment[it].nameEquipment + ": " + clipItemRoom.equipment[it].counterEquipment.toString(),
+                            modifier = Modifier.padding(bottom = 8.dp)
                         )
                     }
-
                 }
-            })
+            }
         }
     }
 }
