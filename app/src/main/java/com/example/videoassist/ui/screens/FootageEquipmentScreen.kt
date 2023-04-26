@@ -1,7 +1,10 @@
 package com.example.videoassist.ui.screens
 
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,57 +29,46 @@ import com.example.videoassist.ui.blocks.AddEquipmentButton
 import com.example.videoassist.ui.blocks.HeaderTopAppBar
 import com.example.videoassist.ui.blocks.SelectEquipment
 import com.example.videoassist.ui.theme.DarkGray
-import com.example.videoassist.ui.theme.MainTextColor
 import com.example.videoassist.ui.theme.SnackbarBackground
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.*
 
 @Composable
-fun NewClip(
+fun EquipmentScreen(
     navController: NavController,
     currentIdClip: Int,
     databaseEquipment: List<EquipmentRoom>,
     database: AppDatabase,
 ) {
-    val coroutineScope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
+    val coroutineScope = rememberCoroutineScope()
     val focusRequester = remember { FocusRequester() }
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
 
-    var clipName by remember { mutableStateOf("") }
-    var clipDescription by remember { mutableStateOf("") }
     var createNewEquipment by remember { mutableStateOf(false) }
     var selectedEquipment by remember { mutableStateOf(false) }
     var newEquipmentName by remember { mutableStateOf("") }
     var newEquipmentConditional by remember { mutableStateOf(false) }
     var clipEquipment by remember { mutableStateOf(mutableListOf<EquipmentClip>()) }
-    var clipFootage by remember { mutableStateOf(mutableListOf<Footage>()) }
-    var errorName by remember { mutableStateOf(false) }
-    var errorEquipment by remember { mutableStateOf(false) }
 
-    val currentDatabaseClip by database.databaseDao().getClip(currentIdClip).observeAsState()
     var currentClip by remember {
         mutableStateOf(
-            ClipItemRoom(currentIdClip,"",
-            clipName,clipDescription, clipFootage, clipEquipment)
-        ) }
+            ClipItemRoom(currentIdClip,"", "","", mutableListOf<Footage>(), mutableListOf<EquipmentClip>())) }
+
+    val currentDatabaseClip by database.databaseDao().getClip(currentIdClip).observeAsState()
+
     var updateState by remember { mutableStateOf(false) }
     if (!updateState) {
         currentDatabaseClip?.let {
             currentClip = currentDatabaseClip as ClipItemRoom
-            clipName = currentClip.clipName
-            clipDescription = currentClip.clipDescription
             clipEquipment = currentClip.equipment
-            clipFootage = currentClip.footage
             updateState = true
         }
     }
-
     Scaffold(
-        topBar = { HeaderTopAppBar(label = stringResource(id = if (currentIdClip == 0) R.string.createClip else R.string.editClip),
-           navController = navController)},
+        topBar = { HeaderTopAppBar(label = stringResource(id = R.string.editEquipment),
+            navController = navController)
+        },
         snackbarHost = {
             SnackbarHost(
                 snackbarHostState, modifier = Modifier
@@ -105,81 +97,26 @@ fun NewClip(
         bottomBar = {
             SaveButton(onClick = {
                 focusManager.clearFocus()
-                if (clipName !== "") {
-                    val currentDate = Calendar.getInstance().time
-                    val dateFormat = SimpleDateFormat("dd MMM, yyyy", Locale.getDefault())
-                    val formattedDate = dateFormat.format(currentDate)
-                    currentClip = ClipItemRoom(
-                        idClip = currentIdClip,
-                        creationDate = if (currentIdClip == 0) formattedDate else currentClip.creationDate,
-                        clipName = clipName,
-                        clipDescription = clipDescription,
-                        footage = clipFootage,
-                        equipment = clipEquipment,
-                    )
-                    coroutineScope.launch {
-                        if (currentIdClip == 0) {
-                            database.databaseDao().insertClip(currentClip)
-
-                        } else {
-                            database.databaseDao().updateClip(currentClip)
-                        }
-                    }
-                    navController.navigateUp()
-                } else {
-                    errorName = true
+                currentClip.equipment = clipEquipment
+                coroutineScope.launch {
+                        database.databaseDao().updateClip(currentClip)
                 }
+                navController.navigateUp()
             },
-            plus = false, buttonText = R.string.save)
+                plus = false, buttonText = R.string.save)
         },
-        content = {innerPadding ->
+        content = { innerPadding ->
             val lazyColumnState = rememberLazyListState()
+            //add statement if user create new equipment
             LazyColumn(
                 contentPadding = innerPadding,
-                state = lazyColumnState,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp)
             ) {
-                //Clip Name Field
-                item {
-                    if (clipName != "") errorName = false
-                    InputField(
-                        value = clipName,
-                        onValueChange = { clipName = it; },
-                        label = stringResource(id = R.string.name),
-                        singleLine = true,
-                        focusManager = focusManager,
-                        error = errorName,
-                    )
-                }
-                //Clip Description Field
-                item {
-                    InputField(
-                        value = clipDescription,
-                        onValueChange = { clipDescription = it; },
-                        label = stringResource(id = R.string.description),
-                        singleLine = false,
-                        focusManager = focusManager,
-                        error = false,
-                    )
-                }
-                //Select an equipment
-                item {
-                    Text(
-                        text = stringResource(id = R.string.selectEquipment),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MainTextColor,
-                        modifier = Modifier.padding(start = 16.dp, top = 32.dp, bottom = 16.dp)
-                    )
-                }
-                //Draw each equipment
                 if (databaseEquipment.isNotEmpty()) {
                     //add selected for new equipment
-                    if (newEquipmentConditional){
+                    if (newEquipmentConditional) {
                         var databaseUpdate = false
-                        for (equipment in databaseEquipment){
-                            if (newEquipmentName == equipment.nameEquipment){
+                        for (equipment in databaseEquipment) {
+                            if (newEquipmentName == equipment.nameEquipment) {
                                 clipEquipment.add(
                                     EquipmentClip(
                                         idEquipment = equipment.idEquipment,
@@ -193,15 +130,13 @@ fun NewClip(
                         }
                         if (databaseUpdate) {
                             newEquipmentConditional = false
-                            newEquipmentName = ""}
+                            newEquipmentName = ""
+                        }
                     }
                     //draw equipment
                     items(databaseEquipment.size) { item ->
-                        //selectedEquipment = equipmentMap.contains(databaseEquipment[item].idEquipment)
-
                         if (databaseEquipment[item].activeEquipment) {
                             selectedEquipment = false
-                            var selectedEquipmentName = ""
                             var clipEquipmentIndex = -1
                             for (i in clipEquipment.indices) {
                                 if (clipEquipment[i].idEquipment == databaseEquipment[item].idEquipment) {
@@ -244,13 +179,13 @@ fun NewClip(
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
                     AddEquipmentButton(focusRequester = focusRequester,
-                        onClick = { focusManager.moveFocus(FocusDirection.Down)
+                        onClick = {
+                            focusManager.moveFocus(FocusDirection.Down)
                             focusRequester.requestFocus()
                             createNewEquipment = true
                             coroutineScope.launch {
                                 lazyColumnState.scrollToItem(lazyColumnState.layoutInfo.totalItemsCount - 1)
                             }
-                            errorEquipment = false
                         })
                 }
                 //New Equipment Alert Dialog
@@ -265,7 +200,6 @@ fun NewClip(
                                 TextButton(
                                     onClick = {
                                         if (newEquipmentName.isNotEmpty()) {
-                                            errorEquipment = false
                                             val newEquipment = EquipmentRoom(
                                                 nameEquipment = newEquipmentName,
                                                 idEquipment = 0,
@@ -273,14 +207,11 @@ fun NewClip(
                                             )
                                             coroutineScope.launch {
                                                 database.databaseDao().insertEquipment(newEquipment)
-                                                lazyColumnState.scrollToItem(lazyColumnState.layoutInfo.totalItemsCount - 1)
                                             }
-                                            createNewEquipment = false
-                                            newEquipmentConditional = true
-                                            focusManager.moveFocus(FocusDirection.Down)
-                                        } else {
-                                            errorEquipment = true
                                         }
+                                        createNewEquipment = false
+                                        newEquipmentConditional = true
+                                        focusManager.moveFocus(FocusDirection.Down)
                                     },
                                 ) {
                                     Text(
@@ -314,24 +245,19 @@ fun NewClip(
                             titleContentColor = Color.White,
                             textContentColor = Color.White,
                             text = {
-                                Column() {
-                                    if (newEquipmentName != "") errorEquipment = false
-                                    //if (errorEquipment) errorEquipment = newEquipmentName == ""
-                                    InputField(
-                                        value = newEquipmentName,
-                                        onValueChange = { newEquipmentName = it; },
-                                        label = stringResource(id = R.string.name),
-                                        singleLine = true,
-                                        focusManager = focusManager,
-                                        error = errorEquipment,
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                }
-
+                                InputField(
+                                    value = newEquipmentName,
+                                    onValueChange = { newEquipmentName = it; },
+                                    label = stringResource(id = R.string.name),
+                                    singleLine = true,
+                                    focusManager = focusManager,
+                                    error = false,
+                                )
                             },
                             modifier = Modifier.focusRequester(focusRequester),
                         )
                     }
+
                 }
             }
         },
@@ -340,4 +266,3 @@ fun NewClip(
         }
     )
 }
-

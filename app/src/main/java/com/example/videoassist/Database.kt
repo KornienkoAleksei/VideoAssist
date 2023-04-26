@@ -9,10 +9,10 @@ import com.google.gson.reflect.TypeToken
 data class ClipItemRoom (
     @PrimaryKey(autoGenerate = true) val idClip: Int,
     val creationDate: String,
-    val clipName: String,
-    val clipDescription: String,
-    var footage: List<Footage>,
-    var equipment: List<EquipmentClip>
+    var clipName: String,
+    var clipDescription: String,
+    var footage: MutableList<Footage>,
+    var equipment: MutableList<EquipmentClip>
 )
 
 @Entity
@@ -33,13 +33,13 @@ enum class PersonOrientation { MoveLeft, MoveRight, MoveForward, MoveBackward,
     StaticLeft, StaticRight, StaticForward, StaticBackward}
 
 data class Footage (
-    val person: Boolean,
-    val frame: Frame,
-    val cameraMovementVertical: CameraMovementVertical,
-    val cameraMovementHorizontal: CameraMovementHorizontal,
-    val personOrientation: PersonOrientation,
-    val idEquipment: Int,
-    val notes: String
+    var person: Boolean,
+    var frame: Frame,
+    var cameraMovementVertical: CameraMovementVertical,
+    var cameraMovementHorizontal: CameraMovementHorizontal,
+    var personOrientation: PersonOrientation,
+    var idEquipment: Int,
+    var notes: String
 )
 
 data class EquipmentClip (
@@ -90,6 +90,9 @@ interface DatabaseDao {
 
     @Update
     suspend fun updateEquipment(vararg equipment: EquipmentRoom)
+
+    @Delete
+    suspend fun deleteClip(vararg clip: ClipItemRoom)
 }
 
 /*

@@ -1,16 +1,12 @@
-package com.example.videoassist
+package com.example.videoassist.ui.screens
 
 
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
@@ -19,66 +15,145 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavController
+import com.example.videoassist.*
+import com.example.videoassist.R
 import com.example.videoassist.screens.commoncomposable.FrameIconButton
+import com.example.videoassist.screens.commoncomposable.SaveButton
 import com.example.videoassist.screens.commoncomposable.TagCard
 import com.example.videoassist.ui.theme.ButtonDarkGray
 import com.example.videoassist.ui.theme.LightGray
-import com.example.videoassist.ui.theme.MainTextColor
 import com.example.videoassist.ui.theme.TextGray
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
 import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClipScreen(
     navController: NavController,
     currentIdClip: Int,
     database: AppDatabase,
 ) {
+    val coroutineScope = rememberCoroutineScope()
     val currentDatabaseClip by database.databaseDao().getClip(currentIdClip).observeAsState()
     var currentClip by remember {
-        mutableStateOf(ClipItemRoom(0,"","","", emptyList<Footage>(), emptyList<EquipmentClip>())) }
+        mutableStateOf(ClipItemRoom(0,"","","", mutableListOf<Footage>(), mutableListOf<EquipmentClip>())) }
     currentDatabaseClip?.let {
         currentClip = currentDatabaseClip as ClipItemRoom
     }
-    Column(modifier = Modifier.fillMaxSize()) {
-        if (currentClip.footage.isEmpty()) {
-            Box(modifier = Modifier
-                .fillMaxSize()
-                .weight(1f)
-                .padding(top = 16.dp)){
-                ClipHeader(
-                    navController = navController,
-                    clipName = currentClip.clipName,
-                    clipDescription = currentClip.clipDescription
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            Column() {
+                MediumTopAppBar(
+                    title = { Text(text = currentClip.clipName, style = MaterialTheme.typography.displaySmall,
+                        color = Color.White,
+                    )},
+                    navigationIcon = {
+                        IconButton(onClick = { navController.navigateUp() },
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = Color.Black.copy( alpha = 0.0F,),
+                                contentColor = Color.White
+                            ),
+                            modifier = Modifier.size(width = 48.dp, height = 48.dp),) {
+                            Icon(
+                                Icons.Default.ArrowBack,
+                                contentDescription = stringResource(id = R.string.menuIcon),
+                            )}},
+                    actions = {
+                        var expanded by remember { mutableStateOf(false) }
+                        IconButton(
+                            onClick = { expanded = true },
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = Color.Black.copy(alpha = 0.0F),
+                                contentColor = Color.White
+                            ),
+                            modifier = Modifier.size(width = 48.dp, height = 48.dp),
+                        ) {
+                            Icon(
+                                Icons.Default.MoreVert,
+                                contentDescription = stringResource(id = R.string.menuIcon),
+                            )
+                        }
+                        DropdownMenu(expanded = expanded,
+                            onDismissRequest = { expanded = false },
+                            offset = DpOffset(0.dp, (-48).dp),
+                            modifier = Modifier.background(LightGray)
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(
+                                    text = stringResource(id = R.string.edit),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White,) },
+                                onClick = { navController.navigate("NewClip/${currentIdClip}") })
+                            DropdownMenuItem(
+                                text = { Text( text = stringResource(id = R.string.delete),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White,) },
+                                onClick = {
+                                    coroutineScope.launch {
+                                        database.databaseDao().deleteClip(currentClip)
+                                    }
+                                    navController.navigateUp()
+                            })
+                        }
+                    },
+                    scrollBehavior = scrollBehavior
                 )
-                ClipscreenNoFootage( modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.Center))
-            }
-        } else {
-            val lazyColumnState = rememberLazyListState()
-            LazyColumn(
-                state = lazyColumnState,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .weight(1f)
-            ) {
-                item {
-                    ClipHeader(
-                        navController = navController,
-                        clipName = currentClip.clipName,
-                        clipDescription = currentClip.clipDescription
+                if (currentClip.footage.isEmpty()) {
+                    Text(
+                        text = currentClip.clipDescription,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.White,
+                        modifier = Modifier.padding(16.dp)
                     )
                 }
+            }
+        },
+        bottomBar = {
+            SaveButton(
+                onClick = { navController.navigate("NewFootage/${currentIdClip}/${-1}") },
+                plus = true, buttonText = R.string.footage)
+        },
+        content = {innerPadding ->
+            if (currentClip.footage.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize()){
+                    NoElements( iconId = R.drawable.video_library_48px,
+                        buttonNameId = R.string.noFootage,
+                        modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.Center))
+                }
+            } else {
+                val lazyColumnState = rememberLazyListState()
+                LazyColumn(
+                    state = lazyColumnState,
+                    contentPadding = innerPadding,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    if (currentClip.clipDescription.isNotEmpty()) {
+                        item {
+
+                            Text(
+                                text = currentClip.clipDescription,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color.White,
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        }
+                    }
                     items(currentClip.footage.size) {
+
                         var equipmentName: String = ""
                         for (equipment in currentClip.equipment){
                             if (equipment.idEquipment == currentClip.footage[it].idEquipment) {
@@ -90,119 +165,26 @@ fun ClipScreen(
                             numberFootage = it,
                             currentFootage = currentClip.footage[it],
                             currentEquipment = equipmentName,
-                            onClick = { /*TODO*/ })
+                            onEdit = {navController.navigate("NewFootage/${currentIdClip}/${it}")},
+                            onDelete = {
+                                for (equipment in currentClip.equipment) {
+                                    if (currentClip.footage[it].idEquipment == equipment.idEquipment) {
+                                        equipment.counterEquipment--
+                                        break
+                                    }
+                                }
+                                currentClip.footage.remove(currentClip.footage[it])
+                                coroutineScope.launch {
+                                    database.databaseDao().updateClip(currentClip)
+                                }
+                                Lifecycle.Event.ON_RESUME
+                            }
+                        )
                     }
+                }
             }
         }
-        //add footage button
-        Button(
-            onClick = {
-                navController.navigate("NewFootage/${currentIdClip}")
-            },
-            shape = RoundedCornerShape(26.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.White,
-                contentColor = Color.Black
-            ),
-            modifier = Modifier
-                //.align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(bottom = 32.dp)
-                .height(52.dp)
-                .padding(horizontal = 16.dp)
-        ) {
-            Icon(
-                Icons.Default.Add,
-                contentDescription = stringResource(id = R.string.addIcon),
-                modifier = Modifier.size(14.dp)
-            )
-            Text(
-                text = stringResource(id = R.string.footage),
-                style = MaterialTheme.typography.labelLarge
-            )
-        }
-    }
-}
-
-@Composable
-fun ClipHeader (
-     navController: NavController,
-     clipName: String,
-     clipDescription: String,
-     modifier: Modifier = Modifier,
-){
-    Column() {
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(64.dp)
-                .padding(start = 4.dp)
-        ) {
-            IconButton(
-                onClick = { navController.navigateUp() },
-                colors = IconButtonDefaults.iconButtonColors(
-                    containerColor = Color.Black.copy(alpha = 0.0F),
-                    contentColor = Color.White
-                ),
-                modifier = Modifier.size(width = 48.dp, height = 48.dp),
-            ) {
-                Icon(
-                    Icons.Default.ArrowBack,
-                    contentDescription = stringResource(id = R.string.menuIcon),
-                )
-            }
-            IconButton(
-                onClick = { /*TO DO*/ },
-                colors = IconButtonDefaults.iconButtonColors(
-                    containerColor = Color.Black.copy(alpha = 0.0F),
-                    contentColor = Color.White
-                ),
-                modifier = Modifier.size(width = 48.dp, height = 48.dp),
-            ) {
-                Icon(
-                    Icons.Default.MoreVert,
-                    contentDescription = stringResource(id = R.string.menuIcon),
-                )
-            }
-        }
-        Text(text = clipName, style = MaterialTheme.typography.displaySmall,
-            color = Color.White,
-            modifier = Modifier.padding(start = 16.dp, bottom = 16.dp))
-        if (clipDescription.isNotEmpty()) {
-            Text(
-                text = clipDescription, style = MaterialTheme.typography.bodyLarge,
-                color = Color.White,
-                modifier = Modifier.padding(start = 16.dp, bottom = 16.dp)
-            )
-        }
-    }
-}
-
-@Composable
-fun ClipscreenNoFootage(
-    modifier: Modifier = Modifier,
-
-){
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-    ) {
-        Icon(
-            painterResource(id = R.drawable.video_library_48px),
-            contentDescription = stringResource(id = R.string.libraryIcon),
-            tint = Color(0xFFB6B6B6),
-            modifier = Modifier.size(48.dp)
-        )
-        Text(
-            text = stringResource(id = R.string.noFootage),
-            style = MaterialTheme.typography.displaySmall,
-            color = Color(0xFFB6B6B6),
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 16.dp)
-        )
-    }
+    )
 }
 
 @Composable
@@ -210,9 +192,11 @@ fun ClipscreenFootage(
     numberFootage: Int,
     currentFootage: Footage,
     currentEquipment: String,
-    onClick: ()-> Unit,
+    onEdit: ()-> Unit,
+    onDelete: ()-> Unit,
     modifier: Modifier = Modifier,
 ){
+    var expanded by remember { mutableStateOf(false) }
     Surface(shape = RoundedCornerShape(16.dp),
         color = LightGray,
         contentColor = Color.White,
@@ -251,7 +235,7 @@ fun ClipscreenFootage(
                 ){
                     TagCard(label = currentEquipment)
                     IconButton(
-                        onClick = { /*TO DO*/ },
+                        onClick = { expanded = true },
                         colors = IconButtonDefaults.iconButtonColors(
                             containerColor = Color.Black.copy(alpha = 0.0F),
                             contentColor = TextGray
@@ -262,6 +246,22 @@ fun ClipscreenFootage(
                             Icons.Default.MoreVert,
                             contentDescription = stringResource(id = R.string.menuIcon),
                         )
+                    }
+                    DropdownMenu(expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                        offset = DpOffset(0.dp, (-24).dp),
+                        modifier = Modifier.background(ButtonDarkGray)
+                    ) {
+                        DropdownMenuItem(text = { Text(
+                            text = stringResource(id = R.string.edit),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White,
+                        ) }, onClick = onEdit)
+                        DropdownMenuItem(text = { Text(
+                            text = stringResource(id = R.string.delete),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White,
+                        )  }, onClick = onDelete)
                     }
                 }
             }

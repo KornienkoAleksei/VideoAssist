@@ -20,6 +20,10 @@ object NewFootage : Destinations{
     override val route = "NewFootage"
 }
 
-object AddEquipmentToClip : Destinations{
-    override val route = "AddEquipmentToClip"
+object FootageEquipmentScreen : Destinations{
+    override val route = "FootageEquipmentScreen"
+}
+
+object EquipmentScreen : Destinations{
+    override val route = "EquipmentScreen"
 }
