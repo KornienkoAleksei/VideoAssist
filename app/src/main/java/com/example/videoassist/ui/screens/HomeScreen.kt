@@ -1,7 +1,6 @@
 package com.example.videoassist.ui.screens
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,7 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,21 +19,22 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.videoassist.screens.commoncomposable.TagCard
+import com.example.videoassist.ui.blocks.TagCard
 import com.example.videoassist.ui.theme.CaptionColor
 import com.example.videoassist.ui.theme.LightGray
 import com.example.videoassist.ui.theme.MainTextColor
 import kotlinx.coroutines.launch
-import androidx.compose.runtime.rememberCoroutineScope
 import com.example.videoassist.*
 import com.example.videoassist.R
+import com.example.videoassist.functions.EquipmentClip
+import com.example.videoassist.functions.equipmentInClip
 import com.example.videoassist.ui.theme.DarkGray
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     navController: NavController,
     databaseClips: List<ClipItemRoom>,
+    databaseEquipment: List<EquipmentRoom>,
     database: AppDatabase,
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -106,7 +106,7 @@ fun HomeScreen(
                 floatingActionButtonPosition = FabPosition.End,
                 floatingActionButton = {
                     Button(
-                        onClick = { navController.navigate("NewClip/${0}") },
+                        onClick = { navController.navigate("ClipNew/${0}") },
                         shape = CircleShape,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color.White,
@@ -169,6 +169,7 @@ fun HomeScreen(
                                 items(databaseClips.size) {
                                     ClipList(
                                         clipItemRoom = databaseClips[databaseClips.size - 1 - it],
+                                        databaseEquipment = databaseEquipment,
                                         navController = navController
                                     );
                                 }
@@ -216,6 +217,7 @@ fun Header(
 @Composable
 fun ClipList (
     clipItemRoom: ClipItemRoom,
+    databaseEquipment: List<EquipmentRoom>,
     navController: NavController,
     modifier: Modifier = Modifier
 ){
@@ -228,6 +230,13 @@ fun ClipList (
             .padding(horizontal = 16.dp)
             .padding(bottom = 8.dp)
     ) {
+        var clipEquipmentUsed by remember { mutableStateOf(listOf<EquipmentClip>()) }
+        if (clipEquipmentUsed.isEmpty()){
+            clipEquipmentUsed = equipmentInClip(
+                clipItemRoom = clipItemRoom,
+                databaseEquipment = databaseEquipment
+            )
+        }
         Column(modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(top = 16.dp, bottom = 8.dp)) {
@@ -251,16 +260,17 @@ fun ClipList (
                 text = clipItemRoom.clipName, style = MaterialTheme.typography.displaySmall,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
+
             FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                repeat(clipItemRoom.equipment.size) {
-                    if (clipItemRoom.equipment[it].counterEquipment != 0) {
+                repeat(clipEquipmentUsed.size) {
                         TagCard(
-                            label = clipItemRoom.equipment[it].nameEquipment + ": " + clipItemRoom.equipment[it].counterEquipment.toString(),
+                            label = clipEquipmentUsed[it].nameEquipment + ": " + clipEquipmentUsed[it].counterEquipment.toString(),
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
-                    }
+
                 }
             }
+
         }
     }
 }

@@ -2,6 +2,8 @@ package com.example.videoassist
 
 import androidx.lifecycle.LiveData
 import androidx.room.*
+import com.example.videoassist.functions.EquipmentClip
+import com.example.videoassist.functions.Footage
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
@@ -11,8 +13,8 @@ data class ClipItemRoom (
     val creationDate: String,
     var clipName: String,
     var clipDescription: String,
-    var footage: MutableList<Footage>,
-    var equipment: MutableList<EquipmentClip>
+    var clipFootageList: MutableList<Footage>,
+    var equipmentList: MutableList<EquipmentClip>
 )
 
 @Entity
@@ -20,32 +22,6 @@ data class EquipmentRoom(
     @PrimaryKey(autoGenerate = true) val idEquipment: Int,
     val nameEquipment: String,
     var activeEquipment: Boolean
-)
-
-enum class Frame { Landscape, FullBody, Body, Face, Detail}
-
-enum class CameraMovementVertical { Static, MoveUp, MoveDown}
-
-enum class CameraMovementHorizontal { Static, Forward, Backward, Left, Right,
-    PanoramicLeft, PanoramicRight, OrbitLeft, OrbitRight}
-
-enum class PersonOrientation { MoveLeft, MoveRight, MoveForward, MoveBackward,
-    StaticLeft, StaticRight, StaticForward, StaticBackward}
-
-data class Footage (
-    var person: Boolean,
-    var frame: Frame,
-    var cameraMovementVertical: CameraMovementVertical,
-    var cameraMovementHorizontal: CameraMovementHorizontal,
-    var personOrientation: PersonOrientation,
-    var idEquipment: Int,
-    var notes: String
-)
-
-data class EquipmentClip (
-    val idEquipment: Int,
-    val nameEquipment: String,
-    var counterEquipment: Int,
 )
 
 class Converters {

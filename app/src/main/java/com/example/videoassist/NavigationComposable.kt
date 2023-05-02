@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.*
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.videoassist.ui.ClipNew
 import com.example.videoassist.ui.screens.*
 
 @Composable
@@ -17,16 +18,16 @@ fun Navigation (navController: NavHostController,
         startDestination = HomeScreen.route
     ) {
         composable(HomeScreen.route) {
-            HomeScreen(navController = navController, databaseClips = databaseClips, database = database, )
+            HomeScreen(navController = navController, databaseClips = databaseClips, databaseEquipment = databaseEquipment, database = database, )
         }
         //New Clip
-        composable("NewClip/{currentIdClip}", arguments = listOf(navArgument("currentIdClip") {
+        composable("ClipNew/{currentIdClip}", arguments = listOf(navArgument("currentIdClip") {
             defaultValue = 0
             NavType.IntType
         })) {
             val currentIdClip = it.arguments?.getInt("currentIdClip")
             currentIdClip?.let {
-                NewClip(
+                ClipNew(
                     navController = navController,
                     currentIdClip = currentIdClip,
                     databaseEquipment = databaseEquipment,
@@ -44,12 +45,13 @@ fun Navigation (navController: NavHostController,
                 ClipScreen(
                     navController = navController,
                     currentIdClip = currentIdClip,
+                    databaseEquipment = databaseEquipment,
                     database = database,
                 )
             }
         }
         //New footage
-        composable("NewFootage/{currentIdClip}/{currentIdFootage}", arguments = listOf(
+        composable("FootageScreen/{currentIdClip}/{currentIdFootage}", arguments = listOf(
             navArgument("currentIdClip") {
             defaultValue = 0
             NavType.IntType},
@@ -61,23 +63,24 @@ fun Navigation (navController: NavHostController,
             val currentIdFootage = it.arguments?.getInt("currentIdFootage")
             currentIdClip?.let {
                 currentIdFootage?.let {
-                    NewFootage(
+                    FootageScreen(
                         navController = navController,
                         currentIdClip = currentIdClip,
                         currentIdFootage = currentIdFootage,
+                        databaseEquipment = databaseEquipment,
                         database = database
                     )
                 }
             }
         }
         //Footage Equipment Screen
-        composable("FootageEquipmentScreen/{currentIdClip}", arguments = listOf(navArgument("currentIdClip") {
+        composable("ClipEquipmentScreen/{currentIdClip}", arguments = listOf(navArgument("currentIdClip") {
             defaultValue = 0
             NavType.IntType
         })){
             val currentIdClip = it.arguments?.getInt("currentIdClip")
             currentIdClip?.let {
-                EquipmentScreen(
+                ClipEquipmentScreen(
                     navController = navController,
                     currentIdClip = currentIdClip,
                     databaseEquipment = databaseEquipment,

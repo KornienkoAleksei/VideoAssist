@@ -12,61 +12,47 @@
     <string name="libraryIcon">Library Icon</string>
 
     <string name="name">Name</string>
+    <string name="errName">Enter a name</string>
     <string name="description">Description</string>
-    <string name="selectEquipment">Select an equipment</string>
-    <string name="save">Save</string>
-    <string name="cancel">Cancel</string>
-    <string name="createClip">Create a new clip</string>
-    <string name="clips">Clips</string>
-    <string name="editClip">Edit clip</string>
-    <string name="editEquipment">Edit equipment</string>
-    <string name="add">Add</string>
-    <string name="newEquipment">New Equipment</string>
-    <string name="equipment">Equipment</string>
 
-    <string name="noFootage">No added footages</string>
+    <string name="save">Save</string>
+    <string name="add">Add</string>
+    <string name="cancel">Cancel</string>
+    <string name="objectButton">Object</string>
+
+    <string name="clips">Clips</string>
+    <string name="createClip">Create a new clip</string>
+    <string name="editClip">Edit clip</string>
+    <string name="errLongNameClip">Name must be less than 26 characters</string>
+
+    <string name="equipment">Equipment</string>
+    <string name="newEquipment">New Equipment</string>
+    <string name="editEquipment">Edit equipment</string>
+    <string name="selectEquipment">Select an equipment</string>
     <string name="noEquipment">No equipment</string>
+
+    <string name="noError">no errors</string>
+    <string name="errLongNameEquipment">Name must be less than 20 characters</string>
+    <string name="errDeleteEquipment">\" is already used in this clip</string>
+    <string name="errAddExistingEquipment">Equipment already exists</string>
+    <string name="errAddInactiveEquipment">Equipment is inactive</string>
+
     <string name="footage">FOOTAGE</string>
     <string name="footageNum">Footage #</string>
-    <string name="objectButton">Object</string>
+    <string name="noFootage">No added footages</string>
+
     <string name="person">Person</string>
     <string name="camera">Camera</string>
-    <string name="objectBody">object body</string>
-    <string name="objectDetail">object detail</string>
-    <string name="objectLandscape">object landscape</string>
-    <string name="personBody">person body</string>
-    <string name="personDetail">person detail</string>
-    <string name="personFace">person face</string>
-    <string name="personFullBody">person full body</string>
-    <string name="personLandscape">person landscape</string>
+
     <string name="notes">Notes</string>
     <string name="edit">Edit</string>
     <string name="delete">Delete</string>
-    <string name="errDeleteEquipment">\" is already used in this clip</string>
-    <string name="errName">Enter a name</string>
-    <string name="errAddNewFootage">Select an equipment</string>
 
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
 
-    <string name="MoveLeft">Move left</string>
-    <string name="MoveRight">Move right</string>
-    <string name="MoveForward">Move forward</string>
-    <string name="MoveBackward">Move backward</string>
-    <string name="StaticLeft">Static, Left</string>
-    <string name="StaticRight">Static, Right</string>
-    <string name="StaticForward">Static, Forward</string>
-    <string name="StaticBackward">Static, Backward</string>
-
-    <string name="Static">Static</string>
-    <string name="MoveUp">Move Up</string>
-    <string name="MoveDown">Move Down</string>
-
-    <string name="Forward">Forward</string>
-    <string name="Backward">Backward</string>
-    <string name="Left">Left</string>
-    <string name="Right">Right</string>
-    <string name="PanoramicLeft">Panoramic left</string>
-    <string name="PanoramicRight">Panoramic right</string>
-    <string name="OrbitLeft">Orbit left</string>
-    <string name="OrbitRight">Orbit right</string>
+    <string name="deleteClip">Delete Clip</string>
+    <string name="deleteFootage">Delete Footage</string>
+    <string name="deleteMessage">Delete message</string>
 
 </resources>

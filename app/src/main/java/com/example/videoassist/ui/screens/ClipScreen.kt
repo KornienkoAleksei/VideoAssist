@@ -14,20 +14,19 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavController
 import com.example.videoassist.*
 import com.example.videoassist.R
-import com.example.videoassist.screens.commoncomposable.FrameIconButton
-import com.example.videoassist.screens.commoncomposable.SaveButton
-import com.example.videoassist.screens.commoncomposable.TagCard
+import com.example.videoassist.functions.*
+import com.example.videoassist.ui.blocks.*
 import com.example.videoassist.ui.theme.ButtonDarkGray
 import com.example.videoassist.ui.theme.LightGray
 import com.example.videoassist.ui.theme.TextGray
@@ -39,6 +38,7 @@ import java.util.*
 fun ClipScreen(
     navController: NavController,
     currentIdClip: Int,
+    databaseEquipment: List<EquipmentRoom>,
     database: AppDatabase,
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -49,6 +49,10 @@ fun ClipScreen(
         currentClip = currentDatabaseClip as ClipItemRoom
     }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    var clipDelete by remember { mutableStateOf(false)}
+    var footageDelete by remember { mutableStateOf(-1)}
+    var closeMenu by remember { mutableStateOf(false)}
+    val focusRequester = remember { FocusRequester() }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -94,22 +98,28 @@ fun ClipScreen(
                                     text = stringResource(id = R.string.edit),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = Color.White,) },
-                                onClick = { navController.navigate("NewClip/${currentIdClip}") })
+                                onClick = { navController.navigate("ClipNew/${currentIdClip}") })
                             DropdownMenuItem(
                                 text = { Text( text = stringResource(id = R.string.delete),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = Color.White,) },
-                                onClick = {
-                                    coroutineScope.launch {
+                                onClick = { clipDelete = true})
+                            if (clipDelete){
+                                AlertDialogDelete(
+                                    onDismiss = { clipDelete = false},
+                                    onConfirm = { coroutineScope.launch {
                                         database.databaseDao().deleteClip(currentClip)
                                     }
-                                    navController.navigateUp()
-                            })
+                                        navController.navigateUp() },
+                                    titleResource = R.string.deleteClip,
+                                    focusRequester = focusRequester
+                                )
+                            }
                         }
                     },
                     scrollBehavior = scrollBehavior
                 )
-                if (currentClip.footage.isEmpty()) {
+                if (currentClip.clipFootageList.isEmpty()) {
                     Text(
                         text = currentClip.clipDescription,
                         style = MaterialTheme.typography.bodyLarge,
@@ -120,18 +130,18 @@ fun ClipScreen(
             }
         },
         bottomBar = {
-            SaveButton(
-                onClick = { navController.navigate("NewFootage/${currentIdClip}/${-1}") },
+            BottomButton(
+                onClick = { navController.navigate("FootageScreen/${currentIdClip}/${-1}") },
                 plus = true, buttonText = R.string.footage)
         },
         content = {innerPadding ->
-            if (currentClip.footage.isEmpty()) {
+            if (currentClip.clipFootageList.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize()){
                     NoElements( iconId = R.drawable.video_library_48px,
                         buttonNameId = R.string.noFootage,
                         modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.Center))
+                            .fillMaxWidth()
+                            .align(Alignment.Center))
                 }
             } else {
                 val lazyColumnState = rememberLazyListState()
@@ -143,7 +153,6 @@ fun ClipScreen(
                 ) {
                     if (currentClip.clipDescription.isNotEmpty()) {
                         item {
-
                             Text(
                                 text = currentClip.clipDescription,
                                 style = MaterialTheme.typography.bodyLarge,
@@ -152,34 +161,39 @@ fun ClipScreen(
                             )
                         }
                     }
-                    items(currentClip.footage.size) {
-
-                        var equipmentName: String = ""
-                        for (equipment in currentClip.equipment){
-                            if (equipment.idEquipment == currentClip.footage[it].idEquipment) {
-                                equipmentName = equipment.nameEquipment
-                                break
-                            }
-                        }
-                        ClipscreenFootage(
+                    items(currentClip.clipFootageList.size) {
+                        ClipScreenFootage(
                             numberFootage = it,
-                            currentFootage = currentClip.footage[it],
-                            currentEquipment = equipmentName,
-                            onEdit = {navController.navigate("NewFootage/${currentIdClip}/${it}")},
+                            currentFootage = currentClip.clipFootageList[it],
+                            closeMenu = closeMenu,
+                            databaseEquipment = databaseEquipment,
+                            onEdit = {navController.navigate("FootageScreen/${currentIdClip}/${it}")},
                             onDelete = {
-                                for (equipment in currentClip.equipment) {
-                                    if (currentClip.footage[it].idEquipment == equipment.idEquipment) {
-                                        equipment.counterEquipment--
-                                        break
-                                    }
-                                }
-                                currentClip.footage.remove(currentClip.footage[it])
+                                footageDelete = it
                                 coroutineScope.launch {
-                                    database.databaseDao().updateClip(currentClip)
+                                    lazyColumnState.scrollToItem(lazyColumnState.layoutInfo.totalItemsCount - 1)
                                 }
-                                Lifecycle.Event.ON_RESUME
                             }
                         )
+                    }
+                    if (footageDelete != -1) {
+                        item {
+                            AlertDialogDelete(
+                                onDismiss = { coroutineScope.launch {
+                                        lazyColumnState.scrollToItem(footageDelete)
+                                        footageDelete = -1
+                                    closeMenu = true
+                                }},
+                                onConfirm = {
+                                    currentClip.clipFootageList.remove(currentClip.clipFootageList[footageDelete])
+                                    coroutineScope.launch { database.databaseDao().updateClip(currentClip) }
+                                    footageDelete = -1
+                                    Lifecycle.Event.ON_RESUME
+                                },
+                                titleResource = R.string.deleteFootage,
+                                focusRequester = focusRequester
+                            )
+                        }
                     }
                 }
             }
@@ -187,311 +201,3 @@ fun ClipScreen(
     )
 }
 
-@Composable
-fun ClipscreenFootage(
-    numberFootage: Int,
-    currentFootage: Footage,
-    currentEquipment: String,
-    onEdit: ()-> Unit,
-    onDelete: ()-> Unit,
-    modifier: Modifier = Modifier,
-){
-    var expanded by remember { mutableStateOf(false) }
-    Surface(shape = RoundedCornerShape(16.dp),
-        color = LightGray,
-        contentColor = Color.White,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-    ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Row (
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ){
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    Text(
-                        text = "#${numberFootage + 1}",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = TextGray,
-                    )
-                    ClipscreenCameMovement(cameraMovementVertical = currentFootage.cameraMovementVertical,
-                        cameraMovementHorizontal = currentFootage.cameraMovementHorizontal)
-                    ClipscreenObjectMovement(person = currentFootage.person, frame = currentFootage.frame,
-                        personOrientation = currentFootage.personOrientation)
-                }
-                Row (
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                ){
-                    TagCard(label = currentEquipment)
-                    IconButton(
-                        onClick = { expanded = true },
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = Color.Black.copy(alpha = 0.0F),
-                            contentColor = TextGray
-                        ),
-                        modifier = Modifier.size(24.dp),
-                    ) {
-                        Icon(
-                            Icons.Default.MoreVert,
-                            contentDescription = stringResource(id = R.string.menuIcon),
-                        )
-                    }
-                    DropdownMenu(expanded = expanded,
-                        onDismissRequest = { expanded = false },
-                        offset = DpOffset(0.dp, (-24).dp),
-                        modifier = Modifier.background(ButtonDarkGray)
-                    ) {
-                        DropdownMenuItem(text = { Text(
-                            text = stringResource(id = R.string.edit),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White,
-                        ) }, onClick = onEdit)
-                        DropdownMenuItem(text = { Text(
-                            text = stringResource(id = R.string.delete),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White,
-                        )  }, onClick = onDelete)
-                    }
-                }
-            }
-            if (currentFootage.notes.isNotEmpty()){
-                Text(text = currentFootage.notes,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = TextGray)
-            }
-
-        }
-    }
-}
-
-@Composable
-fun ClipscreenCameMovement(
-    cameraMovementVertical: CameraMovementVertical,
-    cameraMovementHorizontal: CameraMovementHorizontal,
-    modifier: Modifier = Modifier,
-){
-    Row(verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),) {
-        when (cameraMovementVertical) {
-            CameraMovementVertical.Static -> {}
-            CameraMovementVertical.MoveUp -> Icon(
-                painterResource(id = R.drawable.clipscreen_move_up),
-                contentDescription = "",
-                tint = Color.White)
-            CameraMovementVertical.MoveDown -> Icon(
-                painterResource(id = R.drawable.clipscreen_move_down),
-                contentDescription = "",
-                tint = Color.White)
-        }
-        when (cameraMovementHorizontal) {
-            CameraMovementHorizontal.Static -> Icon(
-                painterResource(id = R.drawable.camera_icon),
-                contentDescription = "",
-                tint = Color.White,
-                modifier = Modifier.size(24.dp))
-            CameraMovementHorizontal.Forward -> {
-                Icon(painterResource(id = R.drawable.camera_icon),
-                    contentDescription = "",
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp))
-                Icon(painterResource(id = R.drawable.clipscreen_move_forward),
-                    contentDescription = "",
-                    tint = Color.White)
-            }
-            CameraMovementHorizontal.Backward -> {
-                Icon(painterResource(id = R.drawable.clipscreen_move_backward),
-                    contentDescription = "",
-                    tint = Color.White)
-                Icon(painterResource(id = R.drawable.camera_icon),
-                    contentDescription = "",
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp))
-            }
-            CameraMovementHorizontal.PanoramicLeft -> ClipscreenCameraMovementColumn(
-                direction = true,
-                iconId = R.drawable.clipscreen_move_panoramic_left
-            )
-            CameraMovementHorizontal.Left -> ClipscreenCameraMovementColumn(
-                direction = true,
-                iconId = R.drawable.clipscreen_move_left
-            )
-            CameraMovementHorizontal.OrbitLeft -> ClipscreenCameraMovementColumn(
-                direction = true,
-                iconId = R.drawable.clipscreen_move_orbit_left
-            )
-            CameraMovementHorizontal.PanoramicRight -> ClipscreenCameraMovementColumn(
-                direction = false,
-                iconId = R.drawable.clipscreen_move_panoramic_right
-            )
-            CameraMovementHorizontal.Right -> ClipscreenCameraMovementColumn(
-                direction = false,
-                iconId = R.drawable.clipscreen_move_right
-            )
-            CameraMovementHorizontal.OrbitRight -> ClipscreenCameraMovementColumn(
-                direction = false,
-                iconId = R.drawable.clipscreen_move_orbit_right
-            )
-        }
-    }
-}
-
-@Composable
-fun ClipscreenCameraMovementColumn(
-    direction: Boolean, //true when left
-    iconId: Int,
-    modifier: Modifier = Modifier
-){
-  Column(verticalArrangement = Arrangement.spacedBy(4.dp),
-      horizontalAlignment = Alignment.CenterHorizontally,
-  ) {
-      if (direction){
-          Icon(painterResource(id = iconId),
-              contentDescription = "",
-              tint = Color.White)
-          Icon(painterResource(id = R.drawable.camera_icon),
-              contentDescription = "",
-              tint = Color.White,
-          modifier = Modifier.size(24.dp))
-      } else {
-          Icon(painterResource(id = R.drawable.camera_icon),
-              contentDescription = "",
-              tint = Color.White,
-              modifier = Modifier.size(24.dp))
-          Icon(painterResource(id = iconId),
-              contentDescription = "",
-              tint = Color.White)
-      }
-  }
-}
-
-@Composable
-fun ClipscreenObjectMovement(
-    person: Boolean,
-    frame: Frame,
-    personOrientation: PersonOrientation,
-    modifier: Modifier = Modifier
-){
-    when(personOrientation){
-        PersonOrientation.StaticRight ->
-            ClipscreenObjectMovementColumn( direction = false,
-                iconId = R.drawable.clipscreen_static_left_right,
-                frame = frame, person = person)
-        PersonOrientation.MoveRight ->
-            ClipscreenObjectMovementColumn( direction = false,
-                iconId = R.drawable.clipscreen_move_right,
-                frame = frame, person = person)
-        PersonOrientation.StaticLeft ->
-            ClipscreenObjectMovementColumn( direction = true,
-                iconId = R.drawable.clipscreen_static_left_right,
-                frame = frame, person = person)
-        PersonOrientation.MoveLeft ->
-            ClipscreenObjectMovementColumn( direction = true,
-                iconId = R.drawable.clipscreen_move_left,
-                frame = frame, person = person)
-        PersonOrientation.StaticForward ->
-            ClipscreenObjectMovementRow( direction = true,
-                iconId = R.drawable.clipscreen_static_forward_backward,
-                frame = frame, person = person)
-        PersonOrientation.MoveForward ->
-            ClipscreenObjectMovementRow( direction = true,
-                iconId = R.drawable.clipscreen_move_backward,
-                frame = frame, person = person)
-        PersonOrientation.StaticBackward ->
-            ClipscreenObjectMovementRow( direction = false,
-                iconId = R.drawable.clipscreen_static_forward_backward,
-                frame = frame, person = person)
-        PersonOrientation.MoveBackward ->
-            ClipscreenObjectMovementRow( direction = false,
-                iconId = R.drawable.clipscreen_move_forward,
-                frame = frame, person = person)
-    }
-}
-
-@Composable
-fun ClipscreenObjectMovementRow(
-    direction: Boolean, //true when forward
-    iconId: Int,
-    frame: Frame,
-    person: Boolean,
-    modifier: Modifier = Modifier
-){
-    Row(horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (direction){
-            Icon(painterResource(id = iconId),
-                contentDescription = "",
-                tint = Color.White)
-            FrameIconButton(
-                currentFrame = frame,
-                buttonFrame = frame,
-                enabled = false,
-                person = person,
-                onClick = { /*TODO*/ },
-                modifierButton = Modifier.size(32.dp),
-                modifierIcon = Modifier.size(32.dp))
-        } else {
-            FrameIconButton(
-                currentFrame = frame,
-                buttonFrame = frame,
-                enabled = false,
-                person = person,
-                onClick = { /*TODO*/ },
-                modifierButton = Modifier.size(32.dp),
-                modifierIcon = Modifier.size(32.dp))
-            Icon(painterResource(id = iconId),
-                contentDescription = "",
-                tint = Color.White)
-        }
-    }
-}
-
-@Composable
-fun ClipscreenObjectMovementColumn(
-    direction: Boolean, //true when left
-    iconId: Int,
-    frame: Frame,
-    person: Boolean,
-    modifier: Modifier = Modifier
-){
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        if (direction){
-            Icon(painterResource(id = iconId),
-                contentDescription = "",
-                tint = Color.White)
-            FrameIconButton(
-                currentFrame = frame,
-                buttonFrame = frame,
-                enabled = false,
-                person = person,
-                onClick = { /*TODO*/ },
-                modifierButton = Modifier.size(32.dp),
-                modifierIcon = Modifier.size(32.dp))
-        } else {
-            FrameIconButton(
-                currentFrame = frame,
-                buttonFrame = frame,
-                enabled = false,
-                person = person,
-                onClick = { /*TODO*/ },
-                modifierButton = Modifier.size(32.dp),
-                modifierIcon = Modifier.size(32.dp))
-            Icon(painterResource(id = iconId),
-                contentDescription = "",
-                tint = Color.White)
-        }
-    }
-}

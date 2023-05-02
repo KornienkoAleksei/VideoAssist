@@ -24,16 +24,14 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.videoassist.*
 import com.example.videoassist.R
-import com.example.videoassist.screens.commoncomposable.SaveButton
-import com.example.videoassist.ui.blocks.AddEquipmentButton
-import com.example.videoassist.ui.blocks.HeaderTopAppBar
-import com.example.videoassist.ui.blocks.SelectEquipment
+import com.example.videoassist.functions.*
+import com.example.videoassist.ui.blocks.*
 import com.example.videoassist.ui.theme.DarkGray
 import com.example.videoassist.ui.theme.SnackbarBackground
 import kotlinx.coroutines.launch
 
 @Composable
-fun EquipmentScreen(
+fun ClipEquipmentScreen(
     navController: NavController,
     currentIdClip: Int,
     databaseEquipment: List<EquipmentRoom>,
@@ -50,6 +48,8 @@ fun EquipmentScreen(
     var newEquipmentName by remember { mutableStateOf("") }
     var newEquipmentConditional by remember { mutableStateOf(false) }
     var clipEquipment by remember { mutableStateOf(mutableListOf<EquipmentClip>()) }
+    var clipFootage by remember { mutableStateOf(mutableListOf<Footage>()) }
+    var errorTextEquipment by remember { mutableStateOf(R.string.noError) }
 
     var currentClip by remember {
         mutableStateOf(
@@ -61,7 +61,8 @@ fun EquipmentScreen(
     if (!updateState) {
         currentDatabaseClip?.let {
             currentClip = currentDatabaseClip as ClipItemRoom
-            clipEquipment = currentClip.equipment
+            clipEquipment = currentClip.equipmentList
+            clipFootage = currentClip.clipFootageList
             updateState = true
         }
     }
@@ -95,9 +96,9 @@ fun EquipmentScreen(
             }
         },
         bottomBar = {
-            SaveButton(onClick = {
+            BottomButton(onClick = {
                 focusManager.clearFocus()
-                currentClip.equipment = clipEquipment
+                currentClip.equipmentList = clipEquipment
                 coroutineScope.launch {
                         database.databaseDao().updateClip(currentClip)
                 }
@@ -112,23 +113,16 @@ fun EquipmentScreen(
                 contentPadding = innerPadding,
             ) {
                 if (databaseEquipment.isNotEmpty()) {
-                    //add selected for new equipment
+                    //add selected to the created equipment
                     if (newEquipmentConditional) {
-                        var databaseUpdate = false
-                        for (equipment in databaseEquipment) {
-                            if (newEquipmentName == equipment.nameEquipment) {
-                                clipEquipment.add(
-                                    EquipmentClip(
-                                        idEquipment = equipment.idEquipment,
-                                        nameEquipment = equipment.nameEquipment,
-                                        counterEquipment = 0
-                                    )
-                                )
-                                databaseUpdate = true
-                                break
-                            }
-                        }
-                        if (databaseUpdate) {
+                        val savedEquipment = savedEquipmentName(
+                            databaseEquipment = databaseEquipment,
+                            newEquipmentName = newEquipmentName
+                        )
+                        if (savedEquipment != 0) {
+                            clipEquipment.add(
+                                EquipmentClip(savedEquipment, newEquipmentName, 0)
+                            )
                             newEquipmentConditional = false
                             newEquipmentName = ""
                         }
@@ -136,6 +130,7 @@ fun EquipmentScreen(
                     //draw equipment
                     items(databaseEquipment.size) { item ->
                         if (databaseEquipment[item].activeEquipment) {
+                            //compare equipment in clip and database
                             selectedEquipment = false
                             var clipEquipmentIndex = -1
                             for (i in clipEquipment.indices) {
@@ -145,17 +140,21 @@ fun EquipmentScreen(
                                     break
                                 }
                             }
+                            //draw each equipment
                             SelectEquipment(value = databaseEquipment[item],
                                 selectedEquipment = selectedEquipment,
                                 onChecked = {
                                     selectedEquipment = it
                                     if (!selectedEquipment) {
-                                        if (clipEquipment[clipEquipmentIndex].counterEquipment == 0) {
+                                        if (
+                                        //clipEquipment[clipEquipmentIndex].counterEquipment == 0
+                                            !equipmentUsedInClip(clipFootage, clipEquipmentIndex)
+                                        ) {
                                             clipEquipment.remove(clipEquipment[clipEquipmentIndex])
                                         } else {
                                             coroutineScope.launch {
                                                 snackbarHostState.showSnackbar(
-                                                    message = '"' + clipEquipment[clipEquipmentIndex].nameEquipment + context.getString(
+                                                    message = '"' + databaseEquipment[item].nameEquipment + context.getString(
                                                         R.string.errDeleteEquipment
                                                     ),
                                                     duration = SnackbarDuration.Short,
@@ -165,10 +164,9 @@ fun EquipmentScreen(
                                     } else {
                                         clipEquipment.add(
                                             EquipmentClip(
-                                                idEquipment = databaseEquipment[item].idEquipment,
-                                                nameEquipment = databaseEquipment[item].nameEquipment,
-                                                counterEquipment = 0
-                                            )
+                                                databaseEquipment[item].idEquipment,
+                                                databaseEquipment[item].nameEquipment,
+                                                0)
                                         )
                                     }
                                 })
@@ -191,71 +189,42 @@ fun EquipmentScreen(
                 //New Equipment Alert Dialog
                 if (createNewEquipment) {
                     item {
-                        AlertDialog(
-                            onDismissRequest = {
+                        var saveEquipmentName by remember { mutableStateOf("") }
+                        errorTextEquipment = checkEquipmentName(
+                            newEquipmentName = newEquipmentName,
+                            saveEquipmentName = saveEquipmentName,
+                            errorEquipment = errorTextEquipment
+                        )
+                        AlertDialogEquipment(
+                            focusRequester = focusRequester, focusManager = focusManager,
+                            onDismiss = {
                                 createNewEquipment = false
                                 newEquipmentName = ""
+                                errorTextEquipment = R.string.noError
                             },
-                            confirmButton = {
-                                TextButton(
-                                    onClick = {
-                                        if (newEquipmentName.isNotEmpty()) {
-                                            val newEquipment = EquipmentRoom(
-                                                nameEquipment = newEquipmentName,
-                                                idEquipment = 0,
-                                                activeEquipment = true,
-                                            )
-                                            coroutineScope.launch {
-                                                database.databaseDao().insertEquipment(newEquipment)
-                                            }
-                                        }
-                                        createNewEquipment = false
-                                        newEquipmentConditional = true
-                                        focusManager.moveFocus(FocusDirection.Down)
-                                    },
-                                ) {
-                                    Text(
-                                        text = stringResource(id = R.string.save),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Color.White,
-                                    )
-                                }
-                            },
-                            dismissButton = {
-                                TextButton(
-                                    onClick = {
-                                        createNewEquipment = false;
-                                        newEquipmentName = ""
-                                    },
-                                ) {
-                                    Text(
-                                        text = stringResource(id = R.string.cancel),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Color.White,
-                                    )
-                                }
-                            },
-                            title = {
-                                Text(
-                                    text = stringResource(id = R.string.newEquipment),
-                                    style = MaterialTheme.typography.displaySmall,
-                                )
-                            },
-                            containerColor = DarkGray,
-                            titleContentColor = Color.White,
-                            textContentColor = Color.White,
-                            text = {
-                                InputField(
-                                    value = newEquipmentName,
-                                    onValueChange = { newEquipmentName = it; },
-                                    label = stringResource(id = R.string.name),
-                                    singleLine = true,
+                            onConfirm = {
+                                val savedEquipmentDatabase = saveEquipmentToDatabase(
+                                    newEquipmentName = newEquipmentName,
+                                    coroutineScope = coroutineScope,
+                                    databaseEquipment = databaseEquipment,
+                                    database = database,
+                                    errorEquipment = errorTextEquipment,
+                                    lazyColumnState = lazyColumnState,
                                     focusManager = focusManager,
-                                    error = false,
+                                    idEquipmentInput = 0,
                                 )
+                                errorTextEquipment = savedEquipmentDatabase.errorTextResource
+                                saveEquipmentName = savedEquipmentDatabase.saveEquipmentName
+                                createNewEquipment = savedEquipmentDatabase.createNewEquipment
+                                newEquipmentConditional =
+                                    savedEquipmentDatabase.newEquipmentConditional
                             },
-                            modifier = Modifier.focusRequester(focusRequester),
-                        )
+                            titleResource = R.string.newEquipment,
+                            newEquipmentNameInput = newEquipmentName,
+                            newEquipmentNameOutput = { newEquipmentName = it; },
+                            errorTextResource = errorTextEquipment,
+
+                            )
                     }
 
                 }

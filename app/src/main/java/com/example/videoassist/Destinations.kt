@@ -8,20 +8,20 @@ object HomeScreen : Destinations{
     override val route = "HomeScreen"
 }
 
-object NewClip : Destinations{
-    override val route = "NewClip"
+object ClipNew : Destinations{
+    override val route = "ClipNew"
 }
 
 object ClipScreen : Destinations{
     override val route = "ClipScreen"
 }
 
-object NewFootage : Destinations{
-    override val route = "NewFootage"
+object FootageScreen : Destinations{
+    override val route = "FootageScreen"
 }
 
-object FootageEquipmentScreen : Destinations{
-    override val route = "FootageEquipmentScreen"
+object ClipEquipmentScreen : Destinations{
+    override val route = "ClipEquipmentScreen"
 }
 
 object EquipmentScreen : Destinations{

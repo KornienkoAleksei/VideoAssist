@@ -1,4 +1,4 @@
-package com.example.videoassist
+package com.example.videoassist.ui.blocks
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,6 +16,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import com.example.videoassist.R
 import com.example.videoassist.ui.theme.CaptionColor
 import com.example.videoassist.ui.theme.LightGray
 import com.example.videoassist.ui.theme.MainTextColor
@@ -28,10 +29,11 @@ fun InputField(
     label: String,
     singleLine: Boolean,
     error: Boolean,
+    errorTextResource: Int,
     focusManager: FocusManager,
     modifier: Modifier = Modifier
 ){
-    val context = LocalContext.current
+    //val context = LocalContext.current
     TextField(value = value,
         onValueChange = onValueChange,
         singleLine = singleLine,
@@ -50,7 +52,7 @@ fun InputField(
             .padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
             .fillMaxWidth(),
         trailingIcon = {if (error) Icon(painter = painterResource(id = R.drawable.baseline_error_24), contentDescription = "error", modifier = Modifier.size(24.dp), tint = SnackbarBackground)},
-        supportingText = {if (error) Text(text = stringResource(id = R.string.errName))},
+        supportingText = {if (error) Text(text = stringResource(id = errorTextResource))},
         colors = TextFieldDefaults.colors(
             focusedTextColor = MainTextColor,
             unfocusedTextColor = MainTextColor,
