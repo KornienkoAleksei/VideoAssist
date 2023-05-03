@@ -1,19 +1,19 @@
 package com.example.videoassist.ui
 
+import android.util.Log
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -25,8 +25,6 @@ import com.example.videoassist.R
 import com.example.videoassist.functions.*
 import com.example.videoassist.ui.blocks.*
 import com.example.videoassist.ui.theme.MainTextColor
-import com.example.videoassist.ui.theme.SnackbarBackground
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -45,6 +43,7 @@ fun ClipNew(
     val snackbarHostState = remember { SnackbarHostState() }
     val lazyColumnState = rememberLazyListState()
 
+    //clip variables
     var clipName by remember { mutableStateOf("") }
     var clipDescription by remember { mutableStateOf("") }
     var createNewEquipment by remember { mutableStateOf(false) }
@@ -56,12 +55,17 @@ fun ClipNew(
     var errorTextEquipment by remember { mutableStateOf(R.string.noError) }
     var errorTextName by remember { mutableStateOf(R.string.noError) }
 
+    // get clip from database
     val currentDatabaseClip by database.databaseDao().getClip(currentIdClip).observeAsState()
+
+    //create clip instance
     var currentClip by remember {
         mutableStateOf(
             ClipItemRoom(currentIdClip,"",
             clipName,clipDescription, clipFootage, clipEquipment)
         ) }
+
+    //update clip once when the currentDatabaseClip has been received
     var updateState by remember { mutableStateOf(false) }
     if (!updateState) {
         currentDatabaseClip?.let {
@@ -69,6 +73,7 @@ fun ClipNew(
             clipName = currentClip.clipName
             clipDescription = currentClip.clipDescription
             clipEquipment = currentClip.equipmentList
+            clipFootage = currentClip.clipFootageList
             updateState = true
         }
     }
@@ -77,29 +82,7 @@ fun ClipNew(
         topBar = { HeaderTopAppBar(label = stringResource(id = if (currentIdClip == 0) R.string.createClip else R.string.editClip),
            navController = navController)},
         snackbarHost = {
-            SnackbarHost(
-                snackbarHostState, modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 8.dp)
-            ) {
-                Card(
-                    shape = RoundedCornerShape(4.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = SnackbarBackground,
-                        contentColor = Color.Black
-                    ),
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .fillMaxWidth()
-                ) {
-                    Text(
-                        text = it.visuals.message,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Black,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-            }
+            SnackbarHostBlock(snackbarHostState = snackbarHostState)
         },
         bottomBar = {
             BottomButton(onClick = {
@@ -128,6 +111,7 @@ fun ClipNew(
                     navController.navigate(HomeScreen.route)
                 } else {
                     errorTextName = if (clipName.length > 26) R.string.errLongNameEquipment else R.string.errName
+                    //scroll to Name field
                     coroutineScope.launch {
                         lazyColumnState.scrollToItem(0)
                     }
@@ -180,43 +164,43 @@ fun ClipNew(
                         modifier = Modifier.padding(start = 16.dp, top = 32.dp, bottom = 16.dp)
                     )
                 }
-                //Draw each equipment
+                //Draw each equipment in database
                 if (databaseEquipment.isNotEmpty()) {
-                    //add selected to the created equipment
+                    //add selected state to the created equipment
                     if (newEquipmentConditional) {
                         val savedEquipment = savedEquipmentName(
                             databaseEquipment = databaseEquipment,
                             newEquipmentName = newEquipmentName
                         )
-                        if (savedEquipment != 0) {
+                        if (savedEquipment.idEquipment != 0) {
                             clipEquipment.add(savedEquipment)
                             newEquipmentConditional = false
                             newEquipmentName = ""
                         }
                     }
-                    //draw equipment
+                    //draw equipment from database
                     items(databaseEquipment.size) { item ->
                         if (databaseEquipment[item].activeEquipment) {
-                            //compare equipment in clip and database
-                            selectedEquipment = false
-                            var clipEquipmentIndex = -1
-                            for (i in clipEquipment.indices) {
-                                if (clipEquipment[i].idEquipment == databaseEquipment[item].idEquipment) {
-                                    selectedEquipment = true
-                                    clipEquipmentIndex = i
-                                    break
-                                }
-                            }
+                            //find out clipEquipmentIndex
+                            //where databaseIdEquipment are equal clipEquipmentId
+                            var clipEquipmentIndex = getClipEquipmentIndex(
+                                databaseEquipmentItemId = databaseEquipment[item].idEquipment,
+                                clipEquipment = clipEquipment
+                            )
+                            //when equipment don`t used in clip clipEquipmentIndex == -1
+                            selectedEquipment = clipEquipmentIndex != -1
                             //draw each equipment
                             SelectEquipment(value = databaseEquipment[item],
                                 selectedEquipment = selectedEquipment,
                                 onChecked = {
                                     selectedEquipment = it
+                                    val nameEquip = databaseEquipment[item].nameEquipment
+                                    Log.i("aleks", "$nameEquip : $selectedEquipment")
                                     if (!selectedEquipment) {
-                                        if (!equipmentUsedInClip(clipFootage, clipEquipmentIndex)) {
-                                            clipEquipment.remove(
-                                                EquipmentClip (idEquipment = clipEquipmentIndex)
-                                            )
+                                        //check there aren`t footage with this equipment
+                                        //if true - remove clipEquipment else- show ShackBar
+                                        if (!equipmentUsedInClip(clipFootage, databaseEquipment[item].idEquipment)) {
+                                            clipEquipment.remove(clipEquipment[clipEquipmentIndex])
                                         } else {
                                             coroutineScope.launch {
                                                 snackbarHostState.showSnackbar(
@@ -227,7 +211,12 @@ fun ClipNew(
                                                 )
                                             }
                                         }
-                                    } else clipEquipment.add(databaseEquipment[item].idEquipment)
+                                    } else clipEquipment.add(
+                                        EquipmentClip(
+                                        databaseEquipment[item].idEquipment,
+                                        databaseEquipment[item].nameEquipment,
+                                        0)
+                                    )
                                 })
                         }
                     }

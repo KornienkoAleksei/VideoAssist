@@ -18,7 +18,7 @@ fun Navigation (navController: NavHostController,
         startDestination = HomeScreen.route
     ) {
         composable(HomeScreen.route) {
-            HomeScreen(navController = navController, databaseClips = databaseClips, databaseEquipment = databaseEquipment, database = database, )
+            HomeScreen(navController = navController, databaseClips = databaseClips, databaseEquipment = databaseEquipment)
         }
         //New Clip
         composable("ClipNew/{currentIdClip}", arguments = listOf(navArgument("currentIdClip") {

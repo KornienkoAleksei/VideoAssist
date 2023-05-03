@@ -6,7 +6,7 @@ data class Footage (
     var cameraMovementVertical: CameraMovementVertical,
     var cameraMovementHorizontal: CameraMovementHorizontal,
     var personOrientation: PersonOrientation,
-    var idEquipment: Int, //replace to equipmentId
+    var idEquipment: Int,
     var notes: String
 )
 

@@ -1,5 +1,6 @@
 package com.example.videoassist.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -70,31 +71,7 @@ fun ClipEquipmentScreen(
         topBar = { HeaderTopAppBar(label = stringResource(id = R.string.editEquipment),
             navController = navController)
         },
-        snackbarHost = {
-            SnackbarHost(
-                snackbarHostState, modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 8.dp)
-            ) {
-                Card(
-                    shape = RoundedCornerShape(4.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = SnackbarBackground,
-                        contentColor = Color.Black
-                    ),
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .fillMaxWidth()
-                ) {
-                    Text(
-                        text = it.visuals.message,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Black,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-            }
-        },
+        snackbarHost = { SnackbarHostBlock(snackbarHostState = snackbarHostState) },
         bottomBar = {
             BottomButton(onClick = {
                 focusManager.clearFocus()
@@ -119,10 +96,8 @@ fun ClipEquipmentScreen(
                             databaseEquipment = databaseEquipment,
                             newEquipmentName = newEquipmentName
                         )
-                        if (savedEquipment != 0) {
-                            clipEquipment.add(
-                                EquipmentClip(savedEquipment, newEquipmentName, 0)
-                            )
+                        if (savedEquipment.idEquipment != 0) {
+                            clipEquipment.add(savedEquipment)
                             newEquipmentConditional = false
                             newEquipmentName = ""
                         }
@@ -130,26 +105,25 @@ fun ClipEquipmentScreen(
                     //draw equipment
                     items(databaseEquipment.size) { item ->
                         if (databaseEquipment[item].activeEquipment) {
-                            //compare equipment in clip and database
-                            selectedEquipment = false
-                            var clipEquipmentIndex = -1
-                            for (i in clipEquipment.indices) {
-                                if (clipEquipment[i].idEquipment == databaseEquipment[item].idEquipment) {
-                                    selectedEquipment = true
-                                    clipEquipmentIndex = i
-                                    break
-                                }
-                            }
+                            //find out clipEquipmentIndex
+                            //where databaseIdEquipment are equal clipEquipmentId
+                            var clipEquipmentIndex = getClipEquipmentIndex(
+                                databaseEquipmentItemId = databaseEquipment[item].idEquipment,
+                                clipEquipment = clipEquipment
+                            )
+                            //when equipment don`t used in clip clipEquipmentIndex == -1
+                            selectedEquipment = clipEquipmentIndex != -1
                             //draw each equipment
                             SelectEquipment(value = databaseEquipment[item],
                                 selectedEquipment = selectedEquipment,
                                 onChecked = {
                                     selectedEquipment = it
+                                    val nameEquip = databaseEquipment[item].nameEquipment
+                                    Log.i("aleks", "$nameEquip : $selectedEquipment")
                                     if (!selectedEquipment) {
-                                        if (
-                                        //clipEquipment[clipEquipmentIndex].counterEquipment == 0
-                                            !equipmentUsedInClip(clipFootage, clipEquipmentIndex)
-                                        ) {
+                                        //check there aren`t footage with this equipment
+                                        //if true - remove clipEquipment else- show ShackBar
+                                        if (!equipmentUsedInClip( clipFootage, databaseEquipment[item].idEquipment)) {
                                             clipEquipment.remove(clipEquipment[clipEquipmentIndex])
                                         } else {
                                             coroutineScope.launch {
@@ -166,7 +140,8 @@ fun ClipEquipmentScreen(
                                             EquipmentClip(
                                                 databaseEquipment[item].idEquipment,
                                                 databaseEquipment[item].nameEquipment,
-                                                0)
+                                                0
+                                            )
                                         )
                                     }
                                 })

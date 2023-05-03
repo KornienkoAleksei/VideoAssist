@@ -1,41 +1,30 @@
-package com.example.videoassist.ui.screens
+package com.example.videoassist
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.videoassist.ui.blocks.TagCard
-import com.example.videoassist.ui.theme.CaptionColor
-import com.example.videoassist.ui.theme.LightGray
-import com.example.videoassist.ui.theme.MainTextColor
+import com.example.videoassist.ClipList
+import com.example.videoassist.DrawerHomeScreen
+import com.example.videoassist.HeaderHomeScreen
+import com.example.videoassist.NoClipHomeScreen
 import kotlinx.coroutines.launch
-import com.example.videoassist.*
-import com.example.videoassist.R
-import com.example.videoassist.functions.EquipmentClip
-import com.example.videoassist.functions.equipmentInClip
-import com.example.videoassist.ui.theme.DarkGray
 
 @Composable
 fun HomeScreen(
     navController: NavController,
     databaseClips: List<ClipItemRoom>,
     databaseEquipment: List<EquipmentRoom>,
-    database: AppDatabase,
 ) {
     val coroutineScope = rememberCoroutineScope()
     var drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -47,62 +36,20 @@ fun HomeScreen(
             Box(modifier = Modifier.fillMaxWidth(0.75f)
                 ) {
                 ModalDrawerSheet(){
-                    Column(modifier = Modifier
-                        .background(LightGray)
-                        .fillMaxSize()) {
-                        Spacer(Modifier.height(16.dp))
-                        IconButton(
-                            onClick = { coroutineScope.launch { drawerState.close() } },
-                            modifier = Modifier.size(48.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.baseline_close_24),
-                                contentDescription = "Close menu",
-                                tint = Color.White,
-                                modifier = Modifier.size(24.dp)
-                            )
+                    DrawerHomeScreen(
+                        onClickClose = { coroutineScope.launch { drawerState.close() } },
+                        onClickEquipment = {
+                            coroutineScope.launch { drawerState.close() }
+                            navController.navigate("EquipmentScreen")
                         }
-                        Spacer(Modifier.height(16.dp))
-                        NavigationDrawerItem(
-                            label = { Text(
-                                text = stringResource(id = R.string.clips),
-                                style = MaterialTheme.typography.displaySmall,
-                                color = Color.White) },
-                            selected = true,
-                            onClick = {
-                                coroutineScope.launch { drawerState.close() }
-                            },
-                            colors = NavigationDrawerItemDefaults.colors(
-                                unselectedContainerColor = LightGray,
-                                selectedContainerColor = LightGray,
-
-                            ),
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        NavigationDrawerItem(
-                            label = { Text(
-                                text = stringResource(id = R.string.equipment),
-                                style = MaterialTheme.typography.displaySmall,
-                                color = Color.White) },
-                            selected = true,
-                            onClick = {
-                                coroutineScope.launch { drawerState.close() }
-                                navController.navigate("EquipmentScreen")
-                            },
-                            colors = NavigationDrawerItemDefaults.colors(
-                                unselectedContainerColor = LightGray,
-                                selectedContainerColor = LightGray,
-
-                                ),
-                        )
-                    }
+                    )
                 }
             }
 
         },
         content = {
             Scaffold(
-                topBar = { Header(onClick = { coroutineScope.launch { drawerState.open() } }, noClip = databaseClipsIsEmpty ) },
+                topBar = { HeaderHomeScreen(onClick = { coroutineScope.launch { drawerState.open() } }, noClip = databaseClipsIsEmpty ) },
                 floatingActionButtonPosition = FabPosition.End,
                 floatingActionButton = {
                     Button(
@@ -125,40 +72,10 @@ fun HomeScreen(
                 },
                 content = { innerPadding ->
                     if (databaseClipsIsEmpty) {
-                        Box(modifier = Modifier.fillMaxSize()) {
-                            Image(
-                                painter = painterResource(id = R.drawable.welcomescreenimage),
-                                contentDescription = stringResource(id = R.string.welcomeScreenImage),
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .align(Alignment.Center)
-                            )
-                            Column(
-                                verticalArrangement = Arrangement.Bottom,
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .align(Alignment.TopStart)
-                            ) {
-                                Text(
-                                    text = stringResource(id = R.string.greetings),
-                                    style = MaterialTheme.typography.displayLarge,
-                                    color = MainTextColor,
-                                    modifier = Modifier
-                                        .fillMaxWidth(0.65f)
-                                        .padding(start = 32.dp, bottom = 48.dp)
-                                )
-                                Text(
-                                    text = stringResource(id = R.string.greetingsBody),
-                                    style = MaterialTheme.typography.displayMedium,
-                                    color = CaptionColor,
-                                    modifier = Modifier
-                                        .fillMaxWidth(0.65f)
-                                        .padding(start = 32.dp, bottom = 147.dp)
-                                )
-                            }
-                        }
+                        // draw welcome screen, when there aren't clips
+                        NoClipHomeScreen()
                     } else {
+                        //draw home screen with clips
                         val lazyColumnState = rememberLazyListState();
                         LazyColumn(
                             contentPadding = innerPadding,
@@ -180,97 +97,4 @@ fun HomeScreen(
             )
         }
     )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun Header(
-    onClick: () -> Unit,
-    noClip: Boolean,
-    modifier: Modifier = Modifier) {
-    TopAppBar(
-        title = {Text(
-            text = stringResource(id = R.string.app_name),
-            style = MaterialTheme.typography.displaySmall,
-            color = MainTextColor,
-        )},
-        navigationIcon = {
-            IconButton(onClick = onClick,
-                colors = IconButtonDefaults.iconButtonColors(
-                    containerColor = Color.Black.copy( alpha = 0.0F,),
-                    contentColor = Color.White
-                ),
-                modifier = Modifier.size(width = 48.dp, height = 48.dp),) {
-                Icon(Icons.Default.Menu,
-                    contentDescription = stringResource(id = R.string.menuIcon),
-                )
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = if (noClip) Color.DarkGray.copy( alpha = 0.0F,) else DarkGray
-        ),
-        modifier = Modifier
-    )
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-fun ClipList (
-    clipItemRoom: ClipItemRoom,
-    databaseEquipment: List<EquipmentRoom>,
-    navController: NavController,
-    modifier: Modifier = Modifier
-){
-    Surface(onClick = { navController.navigate("ClipScreen/${clipItemRoom.idClip}") },
-        shape = RoundedCornerShape(16.dp),
-        color = LightGray,
-        contentColor = Color.White,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 8.dp)
-    ) {
-        var clipEquipmentUsed by remember { mutableStateOf(listOf<EquipmentClip>()) }
-        if (clipEquipmentUsed.isEmpty()){
-            clipEquipmentUsed = equipmentInClip(
-                clipItemRoom = clipItemRoom,
-                databaseEquipment = databaseEquipment
-            )
-        }
-        Column(modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(top = 16.dp, bottom = 8.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 52.dp)
-            ) {
-                Icon(
-                    painterResource(id = R.drawable.movie_48px),
-                    contentDescription = stringResource(id = R.string.movieIcon),
-                    modifier = Modifier.size(24.dp)
-                )
-                Text(
-                    text = clipItemRoom.creationDate,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = CaptionColor,
-                    modifier = Modifier.padding(start = 8.dp)
-                )
-            }
-            Text(
-                text = clipItemRoom.clipName, style = MaterialTheme.typography.displaySmall,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                repeat(clipEquipmentUsed.size) {
-                        TagCard(
-                            label = clipEquipmentUsed[it].nameEquipment + ": " + clipEquipmentUsed[it].counterEquipment.toString(),
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-
-                }
-            }
-
-        }
-    }
 }

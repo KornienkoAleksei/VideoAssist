@@ -1,9 +1,7 @@
 package com.example.videoassist.functions
 
-import com.example.videoassist.ClipItemRoom
-import com.example.videoassist.EquipmentRoom
-
-fun staticPersonOrientationFun (
+//get Person movement if true static else movement
+fun getPersonMovement (
     personOrientation: PersonOrientation
 ): Boolean {
     return  when (personOrientation) { PersonOrientation.StaticRight -> true
@@ -16,64 +14,96 @@ fun staticPersonOrientationFun (
         PersonOrientation.MoveRight -> false}
 }
 
-//return true if equipment used in existing footage
-fun equipmentUsedInClip (
-    clipFootageList: MutableList<Footage>,
-    equipmentId:Int
-): Boolean {
-    for (footage in clipFootageList) {
-        if (footage.idEquipment == equipmentId) {
-            return true
-        }
-    }
-    return false
+// change CameraMovementVertical by press button between direction/static
+fun inverseCameraVertical(
+    cameraMovementVertical: CameraMovementVertical,
+    button: CameraMovementVertical
+): CameraMovementVertical {
+    return if (cameraMovementVertical != button)
+        button
+    else CameraMovementVertical.Static
 }
 
-//return equipment name by id
-fun nameEquipmentById(
-    equipmentId: Int,
-    databaseEquipment: List<EquipmentRoom>,
-): String {
-    for (equipment in databaseEquipment){
-        if (equipment.idEquipment == equipmentId)
-            return equipment.nameEquipment
-    }
-    return ""
+// change CameraMovementHorizontal by press button between direction/static
+fun inverseCameraHorizontal(
+    cameraMovementHorizontal:CameraMovementHorizontal,
+    button: CameraMovementHorizontal
+): CameraMovementHorizontal{
+    return if (cameraMovementHorizontal != button)
+        button
+    else CameraMovementHorizontal.Static
 }
 
-//return list equipment with names which use in footage
-fun equipmentInClip(
-    clipItemRoom: ClipItemRoom,
-    databaseEquipment: List<EquipmentRoom>,
-) : List<EquipmentClip> {
-    var clipEquipmentUsed = mutableListOf<EquipmentClip>()
-    for (footage in clipItemRoom.clipFootageList){
-        FindElement@ for (databaseEquipmentItem in databaseEquipment){
-            if (databaseEquipmentItem.idEquipment == footage.idEquipment){
-                //add first element to list
-                if (clipEquipmentUsed.isEmpty()){
-                    clipEquipmentUsed.add(
-                        EquipmentClip(databaseEquipmentItem.idEquipment, databaseEquipmentItem.nameEquipment, 1)
-                    )
-                    break@FindElement
-                }
-                // second and others
-                for (equipment in clipEquipmentUsed) {
-                    if (equipment.idEquipment == databaseEquipmentItem.idEquipment) {
-                        var counter = equipment.counterEquipment
-                        clipEquipmentUsed.remove(equipment)
-                        clipEquipmentUsed.add(
-                            EquipmentClip(databaseEquipmentItem.idEquipment, databaseEquipmentItem.nameEquipment, ++counter)
-                               )
-                        break@FindElement
-                    }
-                }
-                clipEquipmentUsed.add(
-                    EquipmentClip(databaseEquipmentItem.idEquipment, databaseEquipmentItem.nameEquipment, 1)
-                )
-                break@FindElement
-            }
+// change person orientation
+//button always static
+fun personOrientationButton (
+    personOrientation: PersonOrientation,
+    staticPersonOrientation: Boolean,
+    button: PersonOrientation
+): PersonOrientation {
+    return when (button) {
+        PersonOrientation.StaticForward -> {
+            inversePersonOrientation(
+                personOrientation = personOrientation,
+                staticPersonOrientation = staticPersonOrientation,
+                buttonStatic = PersonOrientation.StaticForward,
+                buttonDynamic = PersonOrientation.MoveForward
+            )
         }
+        PersonOrientation.StaticBackward -> {
+            inversePersonOrientation(
+                personOrientation = personOrientation,
+                staticPersonOrientation = staticPersonOrientation,
+                buttonStatic = PersonOrientation.StaticBackward,
+                buttonDynamic = PersonOrientation.MoveBackward
+            )
+        }
+        PersonOrientation.StaticLeft -> {
+            inversePersonOrientation(
+                personOrientation = personOrientation,
+                staticPersonOrientation = staticPersonOrientation,
+                buttonStatic = PersonOrientation.StaticLeft,
+                buttonDynamic = PersonOrientation.MoveLeft
+            )
+        }
+        PersonOrientation.StaticRight -> {
+            inversePersonOrientation(
+                personOrientation = personOrientation,
+                staticPersonOrientation = staticPersonOrientation,
+                buttonStatic = PersonOrientation.StaticRight,
+                buttonDynamic = PersonOrientation.MoveRight
+            )
+        }
+        else -> {inversePersonDynamic(
+            personOrientation = personOrientation,
+        )}
     }
-    return clipEquipmentUsed
+}
+
+fun inversePersonOrientation(
+    personOrientation: PersonOrientation,
+    staticPersonOrientation: Boolean,
+    buttonStatic: PersonOrientation,
+    buttonDynamic: PersonOrientation
+
+): PersonOrientation {
+    return when (personOrientation) {
+        buttonStatic -> buttonDynamic
+        buttonDynamic -> buttonStatic
+        else -> if (staticPersonOrientation) buttonStatic else buttonDynamic
+    }
+}
+
+fun inversePersonDynamic(
+    personOrientation: PersonOrientation
+): PersonOrientation {
+    return when (personOrientation) {
+        PersonOrientation.MoveBackward -> PersonOrientation.StaticBackward
+        PersonOrientation.MoveForward -> PersonOrientation.StaticForward
+        PersonOrientation.MoveLeft -> PersonOrientation.StaticLeft
+        PersonOrientation.MoveRight -> PersonOrientation.StaticRight
+        PersonOrientation.StaticBackward -> PersonOrientation.MoveBackward
+        PersonOrientation.StaticForward -> PersonOrientation.MoveForward
+        PersonOrientation.StaticLeft -> PersonOrientation.MoveLeft
+        PersonOrientation.StaticRight -> PersonOrientation.MoveRight}
 }
