@@ -12,7 +12,7 @@
     <string name="libraryIcon">Library Icon</string>
 
     <string name="name">Name</string>
-    <string name="errName">Enter a name</string>
+    <string name="errName">Enter name</string>
     <string name="description">Description</string>
 
     <string name="save">Save</string>
@@ -21,14 +21,14 @@
     <string name="objectButton">Object</string>
 
     <string name="clips">Clips</string>
-    <string name="createClip">Create a new clip</string>
+    <string name="createClip">Create new clip</string>
     <string name="editClip">Edit clip</string>
     <string name="errLongNameClip">Name must be less than 26 characters</string>
 
     <string name="equipment">Equipment</string>
-    <string name="newEquipment">New Equipment</string>
+    <string name="newEquipment">New equipment</string>
     <string name="editEquipment">Edit equipment</string>
-    <string name="selectEquipment">Select an equipment</string>
+    <string name="selectEquipment">Select equipment</string>
     <string name="noEquipment">No equipment</string>
 
     <string name="noError">no errors</string>
@@ -51,8 +51,8 @@
     <string name="yes">Yes</string>
     <string name="no">No</string>
 
-    <string name="deleteClip">Delete Clip</string>
-    <string name="deleteFootage">Delete Footage</string>
-    <string name="deleteMessage">Delete message</string>
+    <string name="deleteClip">Delete clip</string>
+    <string name="deleteFootage">Delete footage</string>
+    <string name="deleteMessage">Are you sure you want to delete it?</string>
 
 </resources>

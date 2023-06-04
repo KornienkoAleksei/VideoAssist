@@ -48,9 +48,7 @@ fun InputField(
         ),
         isError = error,
         textStyle = MaterialTheme.typography.bodyLarge,
-        modifier = Modifier
-            .padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
-            .fillMaxWidth(),
+        modifier = modifier,
         trailingIcon = {if (error) Icon(painter = painterResource(id = R.drawable.baseline_error_24), contentDescription = "error", modifier = Modifier.size(24.dp), tint = SnackbarBackground)},
         supportingText = {if (error) Text(text = stringResource(id = errorTextResource))},
         colors = TextFieldDefaults.colors(

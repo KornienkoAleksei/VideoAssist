@@ -12,6 +12,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.videoassist.*
 import com.example.videoassist.R
@@ -188,7 +189,8 @@ fun FootageScreen(
                     label = stringResource(id = R.string.notes),
                     singleLine = false,
                     focusManager = focusManager,
-                    error = false, errorTextResource = R.string.errName
+                    error = false, errorTextResource = R.string.errName,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp).fillMaxWidth()
                 )
             }
         },

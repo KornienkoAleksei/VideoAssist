@@ -109,7 +109,7 @@ fun EquipmentScreen(
                     }
                 }
             }
-            //New Equipment Alert Dialog
+            //New or Edit Equipment Alert Dialog
             if (createNewEquipment) {
                 var saveEquipmentName by remember { mutableStateOf("") }
                 errorTextEquipment = checkEquipmentName(
@@ -139,7 +139,7 @@ fun EquipmentScreen(
                         saveEquipmentName = save.saveEquipmentName
                         createNewEquipment = save.createNewEquipment
                     },
-                    titleResource = R.string.newEquipment,
+                    titleResource = titleResource,
                     newEquipmentNameInput = currentEquipmentName,
                     newEquipmentNameOutput = { currentEquipmentName = it; },
                     errorTextResource = errorTextEquipment,

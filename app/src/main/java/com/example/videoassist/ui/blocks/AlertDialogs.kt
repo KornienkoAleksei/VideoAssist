@@ -2,6 +2,7 @@ package com.example.videoassist.ui.blocks
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -74,6 +75,7 @@ fun AlertDialogEquipment(
                     focusManager = focusManager,
                     error = errorTextResource != R.string.noError,
                     errorTextResource = errorTextResource,
+                    modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }

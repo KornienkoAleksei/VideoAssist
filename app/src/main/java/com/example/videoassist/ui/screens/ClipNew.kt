@@ -108,7 +108,8 @@ fun ClipNew(
                             database.databaseDao().updateClip(currentClip)
                         }
                     }
-                    navController.navigate(HomeScreen.route)
+                    navController.navigateUp()
+                    //navController.navigate(HomeScreen.route)
                 } else {
                     errorTextName = if (clipName.length > 26) R.string.errLongNameEquipment else R.string.errName
                     //scroll to Name field
@@ -141,7 +142,8 @@ fun ClipNew(
                         singleLine = true,
                         focusManager = focusManager,
                         error = errorTextName != R.string.noError,
-                        errorTextResource = errorTextName
+                        errorTextResource = errorTextName,
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp).fillMaxWidth()
                     )
                 }
                 //Clip Description Field
@@ -152,7 +154,8 @@ fun ClipNew(
                         label = stringResource(id = R.string.description),
                         singleLine = false,
                         focusManager = focusManager,
-                        error = false, errorTextResource = R.string.errName
+                        error = false, errorTextResource = R.string.errName,
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp).fillMaxWidth()
                     )
                 }
                 //Select an equipment
@@ -269,6 +272,7 @@ fun ClipNew(
                             newEquipmentNameInput = newEquipmentName,
                             newEquipmentNameOutput = { newEquipmentName = it; },
                             errorTextResource = errorTextEquipment,
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
                 }

@@ -118,12 +118,12 @@ fun ClipList (
     ) {
         //create list of equipment which used in footage
         var clipEquipmentUsed by remember { mutableStateOf(listOf<EquipmentClip>()) }
-        if (clipEquipmentUsed.isEmpty()){
+        //if (clipEquipmentUsed.isEmpty()){
             clipEquipmentUsed = equipmentInClip(
                 clipItemRoom = clipItemRoom,
                 databaseEquipment = databaseEquipment
             )
-        }
+        //}
         Column(modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(top = 16.dp, bottom = 8.dp)) {

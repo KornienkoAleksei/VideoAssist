@@ -103,7 +103,10 @@ fun ClipScreen(
                                 onClick = { clipDelete = true})
                             if (clipDelete){
                                 AlertDialogDelete(
-                                    onDismiss = { clipDelete = false},
+                                    onDismiss = {
+                                        clipDelete = false
+                                        expanded = false
+                                                },
                                     onConfirm = { coroutineScope.launch {
                                         database.databaseDao().deleteClip(currentClip)
                                     }
@@ -114,7 +117,7 @@ fun ClipScreen(
                             }
                         }
                     },
-                    scrollBehavior = scrollBehavior
+                    scrollBehavior = scrollBehavior,
                 )
                 if (currentClip.clipFootageList.isEmpty()) {
                     Text(
